@@ -23,21 +23,21 @@
     </header>
 
     <main class="admin-shell">
-      <section class="metric-grid" aria-label="ລາຍງານ">
+      <section class="metric-grid" aria-label="ສະຫຼຸບ">
         <article class="metric">
-          <span>ຍອດຂາຍລວມ</span>
-          <strong data-total-sales>₭0</strong>
+          <span>ຍອດຂາຍ</span>
+          <strong data-total-sales>LAK 0</strong>
         </article>
         <article class="metric">
-          <span>ອໍເດີທັງໝົດ</span>
+          <span>ອໍເດີ</span>
           <strong data-order-count>0</strong>
         </article>
         <article class="metric">
-          <span>ສິນຄ້າໃນສະຕ໊ອກ</span>
+          <span>ສະຕ໊ອກລວມ</span>
           <strong data-stock-count>0</strong>
         </article>
         <article class="metric warning">
-          <span>ສະຕ໊ອກຕ່ຳ</span>
+          <span>ສະຕ໊ອກໃກ້ໝົດ</span>
           <strong data-low-stock>0</strong>
         </article>
       </section>
@@ -45,30 +45,39 @@
       <section class="admin-layout">
         <aside class="admin-panel">
           <p class="eyebrow">Product</p>
-          <h1>ຈັດການສິນຄ້າ</h1>
+          <h1>ເພີ່ມ / ແກ້ໄຂສິນຄ້າ</h1>
           <form class="product-form" data-product-form>
             <input type="hidden" name="id">
-            <label>
+            <input type="hidden" name="image">
+
+            <label class="full">
+              ຮູບສິນຄ້າ
+              <input name="imageFile" type="file" accept="image/*">
+            </label>
+            <img class="image-preview" data-image-preview src="assets/products/captain-shirt.svg" alt="Product preview">
+
+            <label class="full">
               ຊື່ສິນຄ້າ
-              <input name="name" required placeholder="ເຊັ່ນ CAPTAIN Shirt">
+              <input name="name" required placeholder="ເຊັ່ນ F1 Shirt">
             </label>
             <label>
-              ໝວດໝູ່
+              ໝວດ
               <select name="category">
                 <option value="tops">ເສື້ອ</option>
                 <option value="dresses">ເດຣສ</option>
                 <option value="outerwear">ແຈັກເກັດ</option>
-                <option value="bottoms">ໂສ້ງ/ກະໂປງ</option>
+                <option value="bottoms">ໂສ້ງ / ກະໂປງ</option>
               </select>
             </label>
             <label>
               ລາຄາ LAK
-              <input name="price" required type="number" min="0" step="1000" placeholder="129000">
+              <input name="price" required type="number" min="0" step="1000" placeholder="300000">
             </label>
             <label>
-              ຈຳນວນສະຕ໊ອກ
-              <input name="stock" type="number" min="0" step="1" placeholder="ລວມອັດຕະໂນມັດ" readonly>
+              ສະຕ໊ອກລວມ
+              <input name="stock" type="number" min="0" step="1" placeholder="ຄຳນວນອັດຕະໂນມັດ" readonly>
             </label>
+
             <label class="full">
               ສີ
               <input name="colorsText" placeholder="Black:#111111, White:#f7f3e8, Green:#0c3f2d">
@@ -80,10 +89,10 @@
                   <input data-color-name placeholder="Brown">
                 </label>
                 <label>
-                  ລະຫັດສີ
+                  ເລືອກສີ
                   <input data-color-value type="color" value="#111111">
                 </label>
-                <button class="secondary-admin-button" type="button" data-add-color>ເພີ່ມສີ</button>
+                <button class="secondary-admin-button" type="button" data-add-color>+ ເພີ່ມສີ</button>
               </div>
               <div class="preset-colors" data-preset-colors>
                 <button type="button" data-color-name-preset="Black" data-color-value-preset="#111111" style="background:#111111" aria-label="Black"></button>
@@ -103,6 +112,7 @@
                 </label>
               </div>
             </div>
+
             <label class="full">
               ໄຊສ໌
               <input name="sizesText" placeholder="S, M, L, XL">
@@ -123,15 +133,7 @@
                 <tbody data-variant-table></tbody>
               </table>
             </div>
-            <label class="full">
-              ຮູບສິນຄ້າ URL
-              <input name="image" placeholder="assets/products/captain-shirt.jpeg">
-            </label>
-            <label class="full">
-              ເລືອກຮູບຈາກເຄື່ອງ
-              <input name="imageFile" type="file" accept="image/*">
-            </label>
-            <img class="image-preview" data-image-preview src="assets/products/captain-shirt.jpeg" alt="Product preview">
+
             <label class="full">
               ລາຍລະອຽດ
               <textarea name="description" rows="4" placeholder="ລາຍລະອຽດສັ້ນໆຂອງສິນຄ້າ"></textarea>
@@ -172,13 +174,13 @@
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Orders</p>
-            <h2>ອໍເດີຈາກໜ້າຮ້ານ</h2>
+            <h2>ອໍເດີລູກຄ້າ</h2>
           </div>
           <select data-order-filter>
             <option value="all">ທັງໝົດ</option>
             <option value="new">ອໍເດີໃໝ່</option>
-            <option value="paid">ຊຳລະແລ້ວ</option>
-            <option value="packed">ຈັດສົ່ງແລ້ວ</option>
+            <option value="paid">ຈ່າຍແລ້ວ</option>
+            <option value="packed">ກຳລັງຈັດສົ່ງ</option>
           </select>
         </div>
         <div class="order-list" data-order-list></div>
@@ -200,7 +202,7 @@
           <select name="size" data-stock-size></select>
         </label>
         <label>
-          ຈຳນວນທີ່ເພີ່ມ
+          ຈຳນວນທີ່ຈະເພີ່ມ
           <input name="quantity" type="number" min="1" step="1" value="1">
         </label>
         <p class="stock-current" data-stock-current></p>

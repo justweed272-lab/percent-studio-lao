@@ -5,6 +5,39 @@ const CAPTAIN_STORAGE_KEYS = {
 
 const CAPTAIN_DEFAULT_PRODUCTS = [
   {
+    id: "C21-F1-001",
+    name: "F1 Shirt",
+    category: "tops",
+    label: "ເສື້ອ",
+    price: 300000,
+    stock: 200,
+    description: "ເສື້ອ F1 ຜ້ານຸ່ມ ໃສ່ສະບາຍ",
+    sizes: ["S", "M", "L", "XL"],
+    colors: [
+      {
+        name: "Black",
+        value: "#111111",
+        image: "assets/products/f1-shirt.jpeg",
+      },
+      {
+        name: "White",
+        value: "#f7f3e8",
+        image: "assets/products/f1-shirt-alt.jpeg",
+      },
+    ],
+    variants: [
+      { colorName: "Black", colorValue: "#111111", size: "S", stock: 50 },
+      { colorName: "Black", colorValue: "#111111", size: "M", stock: 50 },
+      { colorName: "Black", colorValue: "#111111", size: "L", stock: 50 },
+      { colorName: "Black", colorValue: "#111111", size: "XL", stock: 50 },
+      { colorName: "White", colorValue: "#f7f3e8", size: "S", stock: 0 },
+      { colorName: "White", colorValue: "#f7f3e8", size: "M", stock: 0 },
+      { colorName: "White", colorValue: "#f7f3e8", size: "L", stock: 0 },
+      { colorName: "White", colorValue: "#f7f3e8", size: "XL", stock: 0 },
+    ],
+    image: "assets/products/f1-shirt.jpeg",
+  },
+  {
     id: "C21-TOP-001",
     name: "Captain Shirt",
     category: "tops",
@@ -13,7 +46,7 @@ const CAPTAIN_DEFAULT_PRODUCTS = [
     stock: 100,
     description: "ເສື້ອ CAPTAIN21 ສີຂາວແຂນຂຽວ ລາຍປັກດ້ານຫຼັງ",
     colors: ["#f7f3e8", "#0c3f2d", "#d94d6a"],
-    image: "assets/products/captain-shirt.jpeg",
+    image: "assets/products/captain-shirt.svg",
   },
   {
     id: "C21-TOP-101",
@@ -83,7 +116,20 @@ const CAPTAIN_DEFAULT_PRODUCTS = [
   },
 ];
 
+const DEFAULT_PRODUCT_IMAGE = "assets/products/captain-shirt.svg";
+
+function cleanImageSource(image) {
+  if (!image || image.includes("fakepath") || image.endsWith("captain-shirt.jpeg")) {
+    return DEFAULT_PRODUCT_IMAGE;
+  }
+  if (image.endsWith("f1-shirt.svg")) {
+    return "assets/products/f1-shirt.jpeg";
+  }
+  return image;
+}
+
 function normalizeProduct(product) {
+  const productImage = cleanImageSource(product.image);
   const colorValues = product.colors?.length ? product.colors : ["#111111", "#f6efe4", "#0f766e"];
   const colorNames = ["Black", "Cream", "Green", "Rose", "Gold"];
   const colors = colorValues.map((color, index) => {
@@ -92,7 +138,7 @@ function normalizeProduct(product) {
       : color;
     return {
       ...normalized,
-      image: normalized.image || product.image,
+      image: cleanImageSource(normalized.image || productImage),
     };
   });
   const sizes = product.sizes?.length ? product.sizes : ["S", "M", "L", "XL"];
@@ -113,6 +159,7 @@ function normalizeProduct(product) {
 
   return {
     ...product,
+    image: productImage,
     sizes,
     colors,
     variants,
@@ -134,8 +181,18 @@ const CaptainStore = {
   },
   getProducts() {
     const products = this.read(CAPTAIN_STORAGE_KEYS.products, null);
-    if (products?.length) return products.map(normalizeProduct);
     const defaults = CAPTAIN_DEFAULT_PRODUCTS.map(normalizeProduct);
+    if (products?.length) {
+      const normalizedProducts = products.map(normalizeProduct);
+      const merged = [
+        ...defaults.filter((defaultProduct) => (
+          !normalizedProducts.some((product) => product.id === defaultProduct.id || product.name === defaultProduct.name)
+        )),
+        ...normalizedProducts,
+      ];
+      this.write(CAPTAIN_STORAGE_KEYS.products, merged);
+      return merged;
+    }
     this.write(CAPTAIN_STORAGE_KEYS.products, defaults);
     return defaults;
   },

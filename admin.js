@@ -4,6 +4,10 @@ const money = new Intl.NumberFormat("lo-LA", {
   maximumFractionDigits: 0,
 });
 
+function formatLak(value) {
+  return `LAK ${Number(value || 0).toLocaleString("en-US")}`;
+}
+
 const labels = {
   tops: "ເສື້ອ",
   dresses: "ເດຣສ",
@@ -46,6 +50,56 @@ const activeColorPreview = document.querySelector("[data-active-color-preview]")
 const activeColorFile = document.querySelector("[data-active-color-file]");
 let selectedImageData = "";
 let activeColorForImage = "";
+const defaultProductImage = "assets/products/captain-shirt.svg";
+
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", reject);
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressImage(dataUrl) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.addEventListener("load", () => {
+      const maxSide = 1200;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.84));
+    });
+    image.addEventListener("error", () => resolve(dataUrl));
+    image.src = dataUrl;
+  });
+}
+
+async function prepareImageFile(file) {
+  const dataUrl = await readImageFile(file);
+  return compressImage(dataUrl);
+}
+
+function setMainProductImage(image) {
+  selectedImageData = image;
+  imagePreview.src = image;
+  productForm.elements.image.value = "";
+}
+
+function isUsableImage(src) {
+  return Boolean(src && !src.includes("fakepath") && !src.endsWith("captain-shirt.jpeg"));
+}
+
+function getCurrentMainImage() {
+  if (isUsableImage(selectedImageData)) return selectedImageData;
+  if (isUsableImage(imagePreview.getAttribute("src"))) return imagePreview.getAttribute("src");
+  if (isUsableImage(productForm.elements.image.value.trim())) return productForm.elements.image.value.trim();
+  return defaultProductImage;
+}
 
 function parseColors(value) {
   return (value || "Black:#111111, Cream:#f6efe4, Green:#0f766e")
@@ -114,7 +168,7 @@ function updateActiveColorEditor(colorName) {
   activeColorForImage = colorName;
   const images = getColorImages();
   activeColorName.textContent = `ຮູບສີ: ${colorName}`;
-  activeColorPreview.src = images[colorName] || selectedImageData || productForm.elements.image.value || "assets/products/captain-shirt.jpeg";
+  activeColorPreview.src = images[colorName] || selectedImageData || productForm.elements.image.value || defaultProductImage;
   colorImageEditor.hidden = false;
 }
 
@@ -140,6 +194,15 @@ function renderVariantRows(variants) {
     variantTable.append(row);
   });
   syncTotalStock();
+}
+
+function cleanNumberInput(input) {
+  const normalized = input.value.replace(/^0+(?=\d)/, "");
+  if (input.value !== normalized) input.value = normalized;
+}
+
+function clearZeroOnFocus(input) {
+  if (input.value === "0") input.value = "";
 }
 
 function buildVariantsFromFields(existing = []) {
@@ -172,10 +235,14 @@ function syncTotalStock() {
 
 function getFormProduct() {
   const data = Object.fromEntries(new FormData(productForm).entries());
-  const id = data.id || `C21-${Date.now().toString().slice(-7)}`;
+  const existingByName = CaptainStore.getProducts().find((product) => (
+    product.name.trim().toLowerCase() === data.name.trim().toLowerCase()
+  ));
+  const id = data.id || existingByName?.id || `C21-${Date.now().toString().slice(-7)}`;
   const category = data.category || "tops";
   const colors = parseColors(data.colorsText);
   const sizes = parseSizes(data.sizesText);
+  const mainImage = getCurrentMainImage();
   const variants = readVariantsFromTable().length
     ? readVariantsFromTable()
     : buildVariantsFromFields();
@@ -187,16 +254,16 @@ function getFormProduct() {
     name: data.name.trim(),
     category,
     label: labels[category],
-    price: Number(data.price || 0),
+    price: Number(String(data.price || "0").replace(/[^\d.]/g, "")),
     stock,
     description: data.description.trim() || "ສິນຄ້າ CAPTAIN21",
     sizes,
     colors: colors.map((color) => ({
       ...color,
-      image: colorImages[color.name] || selectedImageData || data.image.trim() || "assets/products/captain-shirt.jpeg",
+      image: colorImages[color.name] || mainImage,
     })),
     variants,
-    image: selectedImageData || data.image.trim() || "assets/products/captain-shirt.jpeg",
+    image: mainImage,
   };
 }
 
@@ -207,7 +274,7 @@ function clearForm() {
   activeColorForImage = "";
   productForm.dataset.colorImages = "{}";
   colorImageEditor.hidden = true;
-  imagePreview.src = "assets/products/captain-shirt.jpeg";
+  imagePreview.src = defaultProductImage;
   productForm.elements.colorsText.value = "Black:#111111, Cream:#f6efe4, Green:#0f766e";
   productForm.elements.sizesText.value = "S, M, L, XL";
   renderColorChips();
@@ -228,7 +295,8 @@ function editProduct(id) {
   productForm.dataset.colorImages = JSON.stringify(Object.fromEntries(product.colors.map((color) => [color.name, color.image || product.image])));
   productForm.elements.sizesText.value = product.sizes.join(", ");
   renderColorChips(product.colors);
-  updateActiveColorEditor(product.colors[0]?.name || "");
+  activeColorForImage = "";
+  colorImageEditor.hidden = true;
   productForm.elements.image.value = product.image;
   selectedImageData = product.image.startsWith("data:image/") ? product.image : "";
   imagePreview.src = product.image;
@@ -293,7 +361,7 @@ function renderMetrics(products, orders) {
   const stockCount = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
   const lowStock = products.filter((product) => Number(product.stock) <= 3).length;
 
-  document.querySelector("[data-total-sales]").textContent = money.format(totalSales);
+  document.querySelector("[data-total-sales]").textContent = formatLak(totalSales);
   document.querySelector("[data-order-count]").textContent = orders.length;
   document.querySelector("[data-stock-count]").textContent = stockCount;
   document.querySelector("[data-low-stock]").textContent = lowStock;
@@ -314,10 +382,11 @@ function renderProducts() {
   products.forEach((product) => {
     const row = document.createElement("tr");
     const stockClass = product.stock <= 3 ? "stock-pill low" : "stock-pill";
+    const productImage = isUsableImage(product.image) ? product.image : product.colors?.[0]?.image || defaultProductImage;
     row.innerHTML = `
       <td>
         <div class="product-cell">
-          <img src="${product.image}" alt="${product.name}">
+          <img src="${productImage}" alt="${product.name}" onerror="this.src='${defaultProductImage}'">
           <div>
             <strong>${product.name}</strong>
             <div>${product.id}</div>
@@ -325,7 +394,7 @@ function renderProducts() {
         </div>
       </td>
       <td>${product.label}</td>
-      <td>${money.format(product.price)}</td>
+      <td>${formatLak(product.price)}</td>
       <td><span class="${stockClass}">${product.stock}</span></td>
       <td>
         <div class="table-actions">
@@ -374,7 +443,7 @@ function renderOrders() {
         <ol class="order-items">${items}</ol>
       </div>
       <div class="order-actions">
-        <strong>${money.format(order.totals?.total || 0)}</strong>
+        <strong>${formatLak(order.totals?.total || 0)}</strong>
         <select data-status="${order.orderNo}">
           <option value="new">ອໍເດີໃໝ່</option>
           <option value="paid">ຊຳລະແລ້ວ</option>
@@ -400,9 +469,17 @@ productForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const nextProduct = getFormProduct();
   const products = CaptainStore.getProducts();
-  const exists = products.some((product) => product.id === nextProduct.id);
+  const exists = products.some((product) => (
+    product.id === nextProduct.id ||
+    product.name.trim().toLowerCase() === nextProduct.name.trim().toLowerCase()
+  ));
   const nextProducts = exists
-    ? products.map((product) => (product.id === nextProduct.id ? nextProduct : product))
+    ? products.map((product) => (
+      product.id === nextProduct.id ||
+      product.name.trim().toLowerCase() === nextProduct.name.trim().toLowerCase()
+        ? nextProduct
+        : product
+    ))
     : [nextProduct, ...products];
 
   CaptainStore.saveProducts(nextProducts);
@@ -415,28 +492,43 @@ adminSearch.addEventListener("input", renderProducts);
 orderFilter.addEventListener("input", renderOrders);
 productForm.elements.image.addEventListener("input", (event) => {
   if (selectedImageData) return;
-  imagePreview.src = event.target.value || "assets/products/captain-shirt.jpeg";
+  imagePreview.src = event.target.value || defaultProductImage;
 });
 
-productForm.elements.imageFile.addEventListener("change", (event) => {
+productForm.elements.price.addEventListener("input", (event) => {
+  const cleanValue = event.target.value.replace(/[^\d]/g, "");
+  if (event.target.value !== cleanValue) event.target.value = cleanValue;
+});
+
+productForm.elements.imageFile.addEventListener("click", (event) => {
+  event.target.value = "";
+});
+
+productForm.elements.imageFile.addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    selectedImageData = reader.result;
-    imagePreview.src = selectedImageData;
-    productForm.elements.image.value = "";
-    if (activeColorForImage) setColorImage(activeColorForImage, selectedImageData);
-  });
-  reader.readAsDataURL(file);
+  const image = await prepareImageFile(file);
+  setMainProductImage(image);
+  if (activeColorForImage) setColorImage(activeColorForImage, image);
 });
 
 document.querySelector("[data-build-variants]").addEventListener("click", () => {
   renderVariantRows(buildVariantsFromFields(readVariantsFromTable()));
 });
 
-variantTable.addEventListener("input", syncTotalStock);
+variantTable.addEventListener("focusin", (event) => {
+  if (event.target.matches("input[type='number']")) {
+    clearZeroOnFocus(event.target);
+  }
+});
+
+variantTable.addEventListener("input", (event) => {
+  if (event.target.matches("input[type='number']")) {
+    cleanNumberInput(event.target);
+  }
+  syncTotalStock();
+});
 productForm.elements.colorsText.addEventListener("input", () => {
   renderColorChips();
 });
@@ -471,16 +563,20 @@ colorChips.addEventListener("click", (event) => {
   renderVariantRows(buildVariantsFromFields(readVariantsFromTable()));
 });
 
+activeColorFile.addEventListener("click", (event) => {
+  event.target.value = "";
+});
+
 activeColorFile.addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file || !activeColorForImage) return;
-  const image = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result));
-    reader.addEventListener("error", reject);
-    reader.readAsDataURL(file);
-  });
+  const image = await prepareImageFile(file);
   setColorImage(activeColorForImage, image);
+  const firstColor = parseColors(productForm.elements.colorsText.value)[0]?.name;
+  const mainImage = productForm.elements.image.value;
+  if (!selectedImageData || !mainImage || mainImage === defaultProductImage || activeColorForImage === firstColor) {
+    setMainProductImage(image);
+  }
 });
 
 document.querySelector("[data-preset-colors]").addEventListener("click", (event) => {
@@ -525,6 +621,12 @@ document.querySelector("[data-close-stock]").addEventListener("click", () => {
 
 stockForm.elements.colorName.addEventListener("input", updateStockCurrent);
 stockForm.elements.size.addEventListener("input", updateStockCurrent);
+stockForm.elements.quantity.addEventListener("focus", (event) => {
+  clearZeroOnFocus(event.target);
+});
+stockForm.elements.quantity.addEventListener("input", (event) => {
+  cleanNumberInput(event.target);
+});
 
 stockForm.addEventListener("submit", (event) => {
   event.preventDefault();
