@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Percent Studio">
+  <rect width="512" height="512" rx="96" fill="#0f8b7d"/>
+  <circle cx="150" cy="154" r="48" fill="#f2b84b"/>
+  <circle cx="362" cy="358" r="48" fill="#f2b84b"/>
+  <path d="M139 395 373 117" fill="none" stroke="#ffffff" stroke-width="56" stroke-linecap="round"/>
+  <path d="M128 432h256" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" opacity=".42"/>
+</svg>

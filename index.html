@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="lo">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0f8b7d">
+    <meta name="description" content="ແອັບຄິດເປີເຊັນແບບໃຊ້ງ່າຍ ພ້ອມປະຫວັດ ແລະໃຊ້ອອບໄລນ໌ໄດ້">
+    <title>Percent Studio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <div class="brand-row">
+          <div>
+            <p class="eyebrow">Percent Studio</p>
+            <h1 id="app-title">ແອັບຄິດເປີເຊັນ</h1>
+          </div>
+          <div class="mark" aria-hidden="true">%</div>
+        </div>
+
+        <div class="app-actions">
+          <button class="install-button" type="button" id="installButton" hidden>ຕິດຕັ້ງແອັບ</button>
+          <span class="status-pill" id="appStatus">ພ້ອມໃຊ້ງານ</span>
+        </div>
+
+        <nav class="tabs" aria-label="ໂໝດຄຳນວນ">
+          <button class="tab-button is-active" type="button" data-mode="of">ຂອງຈຳນວນ</button>
+          <button class="tab-button" type="button" data-mode="ratio">ເປັນຈັກ %</button>
+          <button class="tab-button" type="button" data-mode="change">ເພີ່ມ/ຫຼຸດ</button>
+          <button class="tab-button" type="button" data-mode="price">ລາຄາ</button>
+        </nav>
+
+        <form class="calculator" id="calculator" autocomplete="off">
+          <div class="actions">
+            <button class="reset-button" type="button" id="resetButton">
+              <span aria-hidden="true">↺</span>
+              ຣີເຊັດ
+            </button>
+          </div>
+
+          <section class="panel is-active" data-panel="of" aria-label="ເປີເຊັນຂອງຈຳນວນ">
+            <label>
+              <span>ເປີເຊັນ</span>
+              <input id="ofPercent" type="number" inputmode="decimal" step="any" value="15">
+            </label>
+            <label>
+              <span>ຈຳນວນ</span>
+              <input id="ofNumber" type="number" inputmode="decimal" step="any" value="1200">
+            </label>
+          </section>
+
+          <section class="panel" data-panel="ratio" aria-label="ຕົວເລກນີ້ເປັນຈັກເປີເຊັນ">
+            <label>
+              <span>ຈຳນວນຍ່ອຍ</span>
+              <input id="ratioPart" type="number" inputmode="decimal" step="any" value="240">
+            </label>
+            <label>
+              <span>ຈຳນວນເຕັມ</span>
+              <input id="ratioWhole" type="number" inputmode="decimal" step="any" value="1200">
+            </label>
+          </section>
+
+          <section class="panel" data-panel="change" aria-label="ເພີ່ມ ຫຼື ຫຼຸດເປີເຊັນ">
+            <label>
+              <span>ຈຳນວນເລີ່ມຕົ້ນ</span>
+              <input id="changeBase" type="number" inputmode="decimal" step="any" value="1200">
+            </label>
+            <label>
+              <span>ເປີເຊັນ</span>
+              <input id="changePercent" type="number" inputmode="decimal" step="any" value="10">
+            </label>
+            <div class="segmented" role="group" aria-label="ເລືອກເພີ່ມ ຫຼື ຫຼຸດ">
+              <button class="segment is-active" type="button" data-change-type="increase">ເພີ່ມ</button>
+              <button class="segment" type="button" data-change-type="decrease">ຫຼຸດ</button>
+            </div>
+          </section>
+
+          <section class="panel" data-panel="price" aria-label="ຄຳນວນລາຄາ">
+            <label>
+              <span>ລາຄາ</span>
+              <input id="priceBase" type="number" inputmode="decimal" step="any" value="1290">
+            </label>
+            <label>
+              <span>ສ່ວນຫຼຸດ %</span>
+              <input id="discountPercent" type="number" inputmode="decimal" step="any" value="20">
+            </label>
+            <label>
+              <span>ພາສີ %</span>
+              <input id="taxPercent" type="number" inputmode="decimal" step="any" value="7">
+            </label>
+          </section>
+        </form>
+      </section>
+
+      <aside class="result-surface" aria-live="polite">
+        <div class="result-header">
+          <p class="eyebrow">ຜົນລັບ</p>
+          <span id="modeBadge">ຂອງຈຳນວນ</span>
+        </div>
+        <output class="result-value" id="resultValue">180</output>
+        <p class="result-line" id="resultLine">15% ຂອງ 1,200 = 180</p>
+
+        <div class="result-tools">
+          <button class="tool-button" type="button" id="copyButton">ຄັດລອກຜົນ</button>
+          <button class="tool-button" type="button" id="saveButton">ບັນທຶກ</button>
+        </div>
+
+        <div class="formula-box">
+          <span>ສູດ</span>
+          <code id="formulaText">(15 / 100) x 1200</code>
+        </div>
+        <dl class="mini-stats" id="miniStats">
+          <div>
+            <dt>ເປີເຊັນ</dt>
+            <dd>15%</dd>
+          </div>
+          <div>
+            <dt>ຈຳນວນ</dt>
+            <dd>1,200</dd>
+          </div>
+        </dl>
+      </aside>
+
+      <section class="history-surface" aria-labelledby="historyTitle">
+        <div class="history-header">
+          <div>
+            <p class="eyebrow">ປະຫວັດ</p>
+            <h2 id="historyTitle">ການຄຳນວນຫຼ້າສຸດ</h2>
+          </div>
+          <button class="clear-history" type="button" id="clearHistoryButton">ລ້າງປະຫວັດ</button>
+        </div>
+        <ol class="history-list" id="historyList"></ol>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Percent Studio",
+  "short_name": "Percent",
+  "description": "ແອັບຄິດເປີເຊັນແບບໃຊ້ງ່າຍ ພ້ອມປະຫວັດ ແລະໃຊ້ອອບໄລນ໌ໄດ້",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f4",
+  "theme_color": "#0f8b7d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
