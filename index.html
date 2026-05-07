@@ -2,141 +2,253 @@
 <html lang="lo">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0f8b7d">
-    <meta name="description" content="ແອັບຄິດເປີເຊັນແບບໃຊ້ງ່າຍ ພ້ອມປະຫວັດ ແລະໃຊ້ອອບໄລນ໌ໄດ້">
-    <title>Percent Studio</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CAPTAIN21 POS Storefront</title>
+    <link rel="preconnect" href="https://images.unsplash.com">
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body>
-    <main class="app-shell">
-      <section class="workspace" aria-labelledby="app-title">
-        <div class="brand-row">
-          <div>
-            <p class="eyebrow">Percent Studio</p>
-            <h1 id="app-title">ແອັບຄິດເປີເຊັນ</h1>
+  <body class="marketplace-body">
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="CAPTAIN21">
+        <img class="brand-logo" src="assets/captain21-logo.jpeg" alt="CAPTAIN21 logo">
+        <span>
+          <strong class="brand-name">CAPTAIN21</strong>
+          <small>POS Connected</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="ຫຼັກ">
+        <a href="#products">ສິນຄ້າ</a>
+        <a href="#pos">ລະບົບຫຼັງບ້ານ</a>
+        <a href="#checkout">ສະຫຼຸບອໍເດີ</a>
+        <a href="admin.html">POS Admin</a>
+      </nav>
+      <button class="cart-pill" type="button" data-open-cart>
+        <span>ກະຕ່າ</span>
+        <strong data-cart-count>0</strong>
+      </button>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow">ແຟຊັນພ້ອມຂາຍໜ້າຮ້ານ ແລະ ອອນລາຍ</p>
+          <h1>CAPTAIN21</h1>
+          <p>ເວັບຂາຍເສື້ອຜ້າທີ່ອອກແບບໃຫ້ເຊື່ອມຕໍ່ POS ແລະ ລະບົບຫຼັງບ້ານໄດ້ ຕັ້ງແຕ່ສະຕ໊ອກສິນຄ້າ ລາຄາ ໂປຣໂມຊັນ ໄປຈົນເຖິງຄຳສັ່ງຊື້</p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#products">ເລືອກສິນຄ້າ</a>
+            <a class="secondary-button" href="#pos">ເບິ່ງການເຊື່ອມຕໍ່ POS</a>
           </div>
-          <div class="mark" aria-hidden="true">%</div>
         </div>
-
-        <div class="app-actions">
-          <button class="install-button" type="button" id="installButton" hidden>ຕິດຕັ້ງແອັບ</button>
-          <span class="status-pill" id="appStatus">ພ້ອມໃຊ້ງານ</span>
-        </div>
-
-        <nav class="tabs" aria-label="ໂໝດຄຳນວນ">
-          <button class="tab-button is-active" type="button" data-mode="of">ຂອງຈຳນວນ</button>
-          <button class="tab-button" type="button" data-mode="ratio">ເປັນຈັກ %</button>
-          <button class="tab-button" type="button" data-mode="change">ເພີ່ມ/ຫຼຸດ</button>
-          <button class="tab-button" type="button" data-mode="price">ລາຄາ</button>
-        </nav>
-
-        <form class="calculator" id="calculator" autocomplete="off">
-          <div class="actions">
-            <button class="reset-button" type="button" id="resetButton">
-              <span aria-hidden="true">↺</span>
-              ຣີເຊັດ
-            </button>
-          </div>
-
-          <section class="panel is-active" data-panel="of" aria-label="ເປີເຊັນຂອງຈຳນວນ">
-            <label>
-              <span>ເປີເຊັນ</span>
-              <input id="ofPercent" type="number" inputmode="decimal" step="any" value="15">
-            </label>
-            <label>
-              <span>ຈຳນວນ</span>
-              <input id="ofNumber" type="number" inputmode="decimal" step="any" value="1200">
-            </label>
-          </section>
-
-          <section class="panel" data-panel="ratio" aria-label="ຕົວເລກນີ້ເປັນຈັກເປີເຊັນ">
-            <label>
-              <span>ຈຳນວນຍ່ອຍ</span>
-              <input id="ratioPart" type="number" inputmode="decimal" step="any" value="240">
-            </label>
-            <label>
-              <span>ຈຳນວນເຕັມ</span>
-              <input id="ratioWhole" type="number" inputmode="decimal" step="any" value="1200">
-            </label>
-          </section>
-
-          <section class="panel" data-panel="change" aria-label="ເພີ່ມ ຫຼື ຫຼຸດເປີເຊັນ">
-            <label>
-              <span>ຈຳນວນເລີ່ມຕົ້ນ</span>
-              <input id="changeBase" type="number" inputmode="decimal" step="any" value="1200">
-            </label>
-            <label>
-              <span>ເປີເຊັນ</span>
-              <input id="changePercent" type="number" inputmode="decimal" step="any" value="10">
-            </label>
-            <div class="segmented" role="group" aria-label="ເລືອກເພີ່ມ ຫຼື ຫຼຸດ">
-              <button class="segment is-active" type="button" data-change-type="increase">ເພີ່ມ</button>
-              <button class="segment" type="button" data-change-type="decrease">ຫຼຸດ</button>
-            </div>
-          </section>
-
-          <section class="panel" data-panel="price" aria-label="ຄຳນວນລາຄາ">
-            <label>
-              <span>ລາຄາ</span>
-              <input id="priceBase" type="number" inputmode="decimal" step="any" value="1290">
-            </label>
-            <label>
-              <span>ສ່ວນຫຼຸດ %</span>
-              <input id="discountPercent" type="number" inputmode="decimal" step="any" value="20">
-            </label>
-            <label>
-              <span>ພາສີ %</span>
-              <input id="taxPercent" type="number" inputmode="decimal" step="any" value="7">
-            </label>
-          </section>
-        </form>
       </section>
 
-      <aside class="result-surface" aria-live="polite">
-        <div class="result-header">
-          <p class="eyebrow">ຜົນລັບ</p>
-          <span id="modeBadge">ຂອງຈຳນວນ</span>
+      <section class="toolbar" aria-label="ຕົວກອງສິນຄ້າ">
+        <div>
+          <label for="search">ຄົ້ນຫາ</label>
+          <input id="search" type="search" placeholder="ເຊັ່ນ ເສື້ອເຊີດ, ເດຣສ, ແຈັກເກັດ">
         </div>
-        <output class="result-value" id="resultValue">180</output>
-        <p class="result-line" id="resultLine">15% ຂອງ 1,200 = 180</p>
+        <div>
+          <label for="category">ໝວດໝູ່</label>
+          <select id="category">
+            <option value="all">ທັງໝົດ</option>
+            <option value="tops">ເສື້ອ</option>
+            <option value="dresses">ເດຣສ</option>
+            <option value="outerwear">ແຈັກເກັດ</option>
+            <option value="bottoms">ໂສ້ງ/ກະໂປງ</option>
+          </select>
+        </div>
+        <div>
+          <label for="sort">ຈັດຮຽງຕາມ</label>
+          <select id="sort">
+            <option value="featured">ແນະນຳ</option>
+            <option value="price-asc">ລາຄາຕ່ຳຫາສູງ</option>
+            <option value="price-desc">ລາຄາສູງຫາຕ່ຳ</option>
+            <option value="stock">ສະຕ໊ອກຫຼາຍສຸດ</option>
+          </select>
+        </div>
+      </section>
 
-        <div class="result-tools">
-          <button class="tool-button" type="button" id="copyButton">ຄັດລອກຜົນ</button>
-          <button class="tool-button" type="button" id="saveButton">ບັນທຶກ</button>
-        </div>
+      <section class="section-heading" id="products">
+        <p class="eyebrow">ສິນຄ້າແນະນຳ</p>
+        <h2>ຄໍເລັກຊັນຫຼ້າສຸດ</h2>
+      </section>
 
-        <div class="formula-box">
-          <span>ສູດ</span>
-          <code id="formulaText">(15 / 100) x 1200</code>
+      <section class="deal-strip" aria-label="Promotions">
+        <a href="#products">
+          <strong>1K</strong>
+          <span>Flash sale</span>
+        </a>
+        <a href="#products">
+          <strong>ສົ່ງຟຣີ</strong>
+          <span>ທຸກອໍເດີ</span>
+        </a>
+        <a href="#products">
+          <strong>HOT</strong>
+          <span>ສິນຄ້າຂາຍດີ</span>
+        </a>
+        <a href="#checkout">
+          <strong>COD</strong>
+          <span>ຈ່າຍປາຍທາງ</span>
+        </a>
+        <a href="admin.html">
+          <strong>POS</strong>
+          <span>ຫຼັງບ້ານ</span>
+        </a>
+      </section>
+
+      <section class="product-grid" data-product-grid aria-live="polite"></section>
+
+      <section class="pos-panel" id="pos">
+        <div>
+          <p class="eyebrow">Back Office Ready</p>
+          <h2>ພ້ອມເຊື່ອມຕໍ່ POS ແລະ ລະບົບຫຼັງບ້ານ</h2>
+          <p>ໄຟລ໌ `app.js` ແຍກຊັ້ນ `posGateway` ໄວ້ສຳລັບປ່ຽນຈາກ mock data ເປັນ API ຈິງ ເຊັ່ນ Loyverse, Odoo, Shopify POS, WooCommerce POS ຫຼືລະບົບທີ່ຮ້ານໃຊ້ຢູ່ແລ້ວ</p>
         </div>
-        <dl class="mini-stats" id="miniStats">
+        <div class="integration-list">
           <div>
-            <dt>ເປີເຊັນ</dt>
-            <dd>15%</dd>
+            <strong>Sync Stock</strong>
+            <span>ດຶງຈຳນວນສິນຄ້າແບບ real-time ຈາກສາງ ຫຼື ສາຂາ</span>
           </div>
           <div>
-            <dt>ຈຳນວນ</dt>
-            <dd>1,200</dd>
+            <strong>Create Order</strong>
+            <span>ສົ່ງຄຳສັ່ງຊື້ກັບໄປທີ່ POS ພ້ອມລາຍການສິນຄ້າ ແລະ ຂໍ້ມູນລູກຄ້າ</span>
           </div>
-        </dl>
-      </aside>
-
-      <section class="history-surface" aria-labelledby="historyTitle">
-        <div class="history-header">
           <div>
-            <p class="eyebrow">ປະຫວັດ</p>
-            <h2 id="historyTitle">ການຄຳນວນຫຼ້າສຸດ</h2>
+            <strong>Promotions</strong>
+            <span>ຮອງຮັບລາຄາໂປຣໂມຊັນ ຄູປອງ ແລະ ສ່ວນຫຼຸດຈາກຫຼັງບ້ານ</span>
           </div>
-          <button class="clear-history" type="button" id="clearHistoryButton">ລ້າງປະຫວັດ</button>
         </div>
-        <ol class="history-list" id="historyList"></ol>
+      </section>
+
+      <section class="checkout-layout" id="checkout">
+        <form class="checkout-form" data-checkout-form>
+          <p class="eyebrow">Checkout</p>
+          <h2>ຂໍ້ມູນລູກຄ້າ</h2>
+          <div class="field-grid">
+            <label>
+              ຊື່-ນາມສະກຸນ
+              <input name="name" required placeholder="ຊື່ລູກຄ້າ">
+            </label>
+            <label>
+              ເບີໂທ
+              <input name="phone" required inputmode="tel" placeholder="08x-xxx-xxxx">
+            </label>
+            <label class="full">
+              ທີ່ຢູ່ຈັດສົ່ງ
+              <textarea name="address" required rows="4" placeholder="ເຮືອນເລກທີ ຖະໜົນ ບ້ານ/ຕຳບົນ ເມືອງ ແຂວງ"></textarea>
+            </label>
+            <fieldset class="payment-box full">
+              <legend>ວິທີຊຳລະເງິນ</legend>
+              <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="qr" checked>
+                QR Payment
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="paymentMethod" value="cod">
+                ເກັບເງິນປາຍທາງ
+              </label>
+              <div class="qr-payment" data-qr-payment>
+                <img src="assets/captain21-qr.jpeg" alt="CAPTAIN21 QR payment">
+                <p>ສະແກນ QR ແລ້ວແນບສະລິບກ່ອນສົ່ງອໍເດີ</p>
+                <label>
+                  ແນບສະລິບ
+                  <input name="paymentSlip" type="file" accept="image/*">
+                </label>
+                <img class="slip-preview" data-slip-preview alt="">
+              </div>
+            </fieldset>
+          </div>
+          <button class="primary-button" type="submit">ສົ່ງອໍເດີເຂົ້າ POS</button>
+          <p class="form-status" data-form-status role="status"></p>
+        </form>
+
+        <aside class="order-summary" aria-label="ສະຫຼຸບອໍເດີ">
+          <h2>ສະຫຼຸບກະຕ່າ</h2>
+          <div data-cart-items class="cart-items"></div>
+          <dl class="totals">
+            <div>
+              <dt>ລວມສິນຄ້າ</dt>
+              <dd data-subtotal>₭0</dd>
+            </div>
+            <div>
+              <dt>ຄ່າຈັດສົ່ງ</dt>
+              <dd data-shipping>₭0</dd>
+            </div>
+            <div class="grand-total">
+              <dt>ຍອດສຸດທິ</dt>
+              <dd data-total>₭0</dd>
+            </div>
+          </dl>
+        </aside>
       </section>
     </main>
 
-    <script src="script.js"></script>
+    <dialog class="cart-drawer" data-cart-dialog>
+      <div class="drawer-header">
+        <h2>ກະຕ່າສິນຄ້າ</h2>
+        <button type="button" class="icon-button" data-close-cart aria-label="ປິດ">x</button>
+      </div>
+      <div data-cart-items-dialog class="cart-items"></div>
+      <a class="primary-button wide" href="#checkout" data-close-cart>ໄປຊຳລະເງິນ</a>
+    </dialog>
+
+    <dialog class="product-dialog" data-product-dialog>
+      <button class="detail-close" type="button" data-close-product aria-label="ປິດ">x</button>
+      <div class="detail-layout">
+        <img class="detail-image" data-detail-image alt="">
+        <div class="detail-info">
+          <p class="category-label" data-detail-category></p>
+          <h2 data-detail-name></h2>
+          <div class="detail-buy-row">
+            <strong class="detail-price" data-detail-price></strong>
+            <div class="detail-stepper" aria-label="ຈຳນວນ">
+              <button type="button" data-detail-dec>-</button>
+              <input data-detail-qty type="number" min="1" value="1">
+              <button type="button" data-detail-inc>+</button>
+            </div>
+          </div>
+          <p class="detail-stock" data-detail-stock></p>
+          <p class="detail-description" data-detail-description></p>
+          <div>
+            <span class="option-title">ສີສິນຄ້າ</span>
+            <div class="detail-color-cards" data-detail-colors></div>
+          </div>
+          <div>
+            <span class="option-title">ໄຊສ໌</span>
+            <div class="detail-size-pills" data-detail-sizes></div>
+          </div>
+          <button class="detail-submit" type="button" data-detail-add>ສົ່ງອໍເດີ</button>
+        </div>
+      </div>
+    </dialog>
+
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <a class="is-active" href="#">⌂<span>ໜ້າຫຼັກ</span></a>
+      <a href="#products">▦<span>ສິນຄ້າ</span></a>
+      <button type="button" data-open-cart>◴<span>ກະຕ່າ</span></button>
+      <a href="#checkout">✓<span>ຊຳລະ</span></a>
+      <a href="admin.html">⚙<span>POS</span></a>
+    </nav>
+
+    <template id="product-card-template">
+      <article class="product-card">
+        <img alt="">
+        <div class="product-body">
+          <div>
+            <p class="category-label"></p>
+            <h3></h3>
+          </div>
+          <p class="description"></p>
+          <div class="product-meta">
+            <strong class="price"></strong>
+            <span class="stock"></span>
+          </div>
+          <button class="add-button" type="button">ເພີ່ມໃສ່ກະຕ່າ</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="pos-store.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

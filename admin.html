@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="lo">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CAPTAIN21 POS Admin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+  </head>
+  <body class="admin-body">
+    <header class="admin-header">
+      <a class="brand" href="index.html" aria-label="CAPTAIN21">
+        <img class="brand-logo" src="assets/captain21-logo.jpeg" alt="CAPTAIN21 logo">
+        <span>
+          <strong class="brand-name">CAPTAIN21</strong>
+          <small>POS Admin</small>
+        </span>
+      </a>
+      <nav class="admin-nav" aria-label="Admin">
+        <a href="index.html">ໜ້າຮ້ານ</a>
+        <button type="button" data-reset-demo>Reset demo</button>
+      </nav>
+    </header>
+
+    <main class="admin-shell">
+      <section class="metric-grid" aria-label="ລາຍງານ">
+        <article class="metric">
+          <span>ຍອດຂາຍລວມ</span>
+          <strong data-total-sales>₭0</strong>
+        </article>
+        <article class="metric">
+          <span>ອໍເດີທັງໝົດ</span>
+          <strong data-order-count>0</strong>
+        </article>
+        <article class="metric">
+          <span>ສິນຄ້າໃນສະຕ໊ອກ</span>
+          <strong data-stock-count>0</strong>
+        </article>
+        <article class="metric warning">
+          <span>ສະຕ໊ອກຕ່ຳ</span>
+          <strong data-low-stock>0</strong>
+        </article>
+      </section>
+
+      <section class="admin-layout">
+        <aside class="admin-panel">
+          <p class="eyebrow">Product</p>
+          <h1>ຈັດການສິນຄ້າ</h1>
+          <form class="product-form" data-product-form>
+            <input type="hidden" name="id">
+            <label>
+              ຊື່ສິນຄ້າ
+              <input name="name" required placeholder="ເຊັ່ນ CAPTAIN Shirt">
+            </label>
+            <label>
+              ໝວດໝູ່
+              <select name="category">
+                <option value="tops">ເສື້ອ</option>
+                <option value="dresses">ເດຣສ</option>
+                <option value="outerwear">ແຈັກເກັດ</option>
+                <option value="bottoms">ໂສ້ງ/ກະໂປງ</option>
+              </select>
+            </label>
+            <label>
+              ລາຄາ LAK
+              <input name="price" required type="number" min="0" step="1000" placeholder="129000">
+            </label>
+            <label>
+              ຈຳນວນສະຕ໊ອກ
+              <input name="stock" type="number" min="0" step="1" placeholder="ລວມອັດຕະໂນມັດ" readonly>
+            </label>
+            <label class="full">
+              ສີ
+              <input name="colorsText" placeholder="Black:#111111, White:#f7f3e8, Green:#0c3f2d">
+            </label>
+            <div class="color-builder full">
+              <div class="color-builder-fields">
+                <label>
+                  ຊື່ສີ
+                  <input data-color-name placeholder="Brown">
+                </label>
+                <label>
+                  ລະຫັດສີ
+                  <input data-color-value type="color" value="#111111">
+                </label>
+                <button class="secondary-admin-button" type="button" data-add-color>ເພີ່ມສີ</button>
+              </div>
+              <div class="preset-colors" data-preset-colors>
+                <button type="button" data-color-name-preset="Black" data-color-value-preset="#111111" style="background:#111111" aria-label="Black"></button>
+                <button type="button" data-color-name-preset="White" data-color-value-preset="#f7f3e8" style="background:#f7f3e8" aria-label="White"></button>
+                <button type="button" data-color-name-preset="Green" data-color-value-preset="#0c3f2d" style="background:#0c3f2d" aria-label="Green"></button>
+                <button type="button" data-color-name-preset="Red" data-color-value-preset="#d91f2b" style="background:#d91f2b" aria-label="Red"></button>
+                <button type="button" data-color-name-preset="Blue" data-color-value-preset="#1e4ed8" style="background:#1e4ed8" aria-label="Blue"></button>
+                <button type="button" data-color-name-preset="Brown" data-color-value-preset="#7a4a2a" style="background:#7a4a2a" aria-label="Brown"></button>
+              </div>
+              <div class="color-chip-list" data-color-chips></div>
+              <div class="color-image-editor" data-color-image-editor hidden>
+                <strong data-active-color-name></strong>
+                <img data-active-color-preview alt="">
+                <label>
+                  ຮູບຂອງສີນີ້
+                  <input data-active-color-file type="file" accept="image/*">
+                </label>
+              </div>
+            </div>
+            <label class="full">
+              ໄຊສ໌
+              <input name="sizesText" placeholder="S, M, L, XL">
+            </label>
+            <div class="variant-tools full">
+              <button class="secondary-admin-button" type="button" data-build-variants>ສ້າງຕາຕະລາງສະຕ໊ອກ</button>
+              <span>ໃສ່ຈຳນວນແຍກຕາມສີ ແລະ ໄຊສ໌</span>
+            </div>
+            <div class="variant-table-wrap full">
+              <table class="variant-table">
+                <thead>
+                  <tr>
+                    <th>ສີ</th>
+                    <th>ໄຊສ໌</th>
+                    <th>ສະຕ໊ອກ</th>
+                  </tr>
+                </thead>
+                <tbody data-variant-table></tbody>
+              </table>
+            </div>
+            <label class="full">
+              ຮູບສິນຄ້າ URL
+              <input name="image" placeholder="assets/products/captain-shirt.jpeg">
+            </label>
+            <label class="full">
+              ເລືອກຮູບຈາກເຄື່ອງ
+              <input name="imageFile" type="file" accept="image/*">
+            </label>
+            <img class="image-preview" data-image-preview src="assets/products/captain-shirt.jpeg" alt="Product preview">
+            <label class="full">
+              ລາຍລະອຽດ
+              <textarea name="description" rows="4" placeholder="ລາຍລະອຽດສັ້ນໆຂອງສິນຄ້າ"></textarea>
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">ບັນທຶກສິນຄ້າ</button>
+              <button class="secondary-admin-button" type="button" data-clear-form>ລ້າງຟອມ</button>
+            </div>
+          </form>
+        </aside>
+
+        <section class="admin-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Inventory</p>
+              <h2>ສິນຄ້າທັງໝົດ</h2>
+            </div>
+            <input data-admin-search type="search" placeholder="ຄົ້ນຫາສິນຄ້າ">
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ສິນຄ້າ</th>
+                  <th>ໝວດ</th>
+                  <th>ລາຄາ</th>
+                  <th>ສະຕ໊ອກ</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody data-product-table></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Orders</p>
+            <h2>ອໍເດີຈາກໜ້າຮ້ານ</h2>
+          </div>
+          <select data-order-filter>
+            <option value="all">ທັງໝົດ</option>
+            <option value="new">ອໍເດີໃໝ່</option>
+            <option value="paid">ຊຳລະແລ້ວ</option>
+            <option value="packed">ຈັດສົ່ງແລ້ວ</option>
+          </select>
+        </div>
+        <div class="order-list" data-order-list></div>
+      </section>
+    </main>
+
+    <dialog class="stock-dialog" data-stock-dialog>
+      <form method="dialog" class="stock-dialog-panel" data-stock-form>
+        <button class="detail-close" type="button" data-close-stock aria-label="ປິດ">x</button>
+        <p class="eyebrow">Stock</p>
+        <h2 data-stock-product-name>ເພີ່ມສະຕ໊ອກ</h2>
+        <input type="hidden" name="productId">
+        <label>
+          ສີ
+          <select name="colorName" data-stock-color></select>
+        </label>
+        <label>
+          ໄຊສ໌
+          <select name="size" data-stock-size></select>
+        </label>
+        <label>
+          ຈຳນວນທີ່ເພີ່ມ
+          <input name="quantity" type="number" min="1" step="1" value="1">
+        </label>
+        <p class="stock-current" data-stock-current></p>
+        <button class="primary-button" type="submit">+ ເພີ່ມສະຕ໊ອກ</button>
+      </form>
+    </dialog>
+
+    <script src="pos-store.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>
