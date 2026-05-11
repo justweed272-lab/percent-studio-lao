@@ -1,23 +1,11 @@
-const posConfig = {
+﻿const posConfig = {
   provider: "local-demo",
   apiBaseUrl: "/api/loyverse",
 };
 
 const posGateway = {
   async fetchProducts() {
-    if (location.protocol === "file:") {
-      return Promise.resolve(CaptainStore.getProducts());
-    }
-
-    try {
-      const response = await fetch(`${posConfig.apiBaseUrl}/products`);
-      if (!response.ok) throw new Error("Cannot fetch Loyverse products");
-      const data = await response.json();
-      return data.products?.length ? data.products : CaptainStore.getProducts();
-    } catch (error) {
-      console.warn("Using local POS products because Loyverse is not ready yet.", error);
-      return CaptainStore.getProducts();
-    }
+    return CaptainStore.loadProducts();
   },
   async createOrder(order) {
     if (location.protocol !== "file:" && posConfig.provider === "loyverse") {
@@ -35,7 +23,7 @@ const posGateway = {
       return data;
     }
 
-    const savedOrder = CaptainStore.createOrder(order);
+    const savedOrder = await CaptainStore.createOrder(order);
     return Promise.resolve({
       ok: true,
       orderNo: savedOrder.orderNo,
@@ -69,14 +57,21 @@ const cartDialog = document.querySelector("[data-cart-dialog]");
 const checkoutForm = document.querySelector("[data-checkout-form]");
 const formStatus = document.querySelector("[data-form-status]");
 const productDialog = document.querySelector("[data-product-dialog]");
+const checkoutAlert = document.querySelector("[data-checkout-alert]");
+const checkoutAlertTitle = document.querySelector("[data-checkout-alert-title]");
+const checkoutAlertMessage = document.querySelector("[data-checkout-alert-message]");
+const checkoutAlertIcon = document.querySelector("[data-checkout-alert-icon]");
 const qrPayment = document.querySelector("[data-qr-payment]");
 const slipPreview = document.querySelector("[data-slip-preview]");
+const slipFileName = document.querySelector("[data-slip-file-name]");
+const toastStack = document.querySelector("[data-toast-stack]");
 const detailState = {
   product: null,
   color: null,
   size: null,
 };
 let paymentSlipData = "";
+let toastTimer = 0;
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -91,7 +86,40 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function playSuccessBell() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  const audio = new AudioContext();
+  const notes = [
+    { frequency: 660, start: 0, duration: 0.12 },
+    { frequency: 880, start: 0.13, duration: 0.16 },
+  ];
+
+  notes.forEach((note) => {
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = note.frequency;
+    gain.gain.setValueAtTime(0.001, audio.currentTime + note.start);
+    gain.gain.exponentialRampToValueAtTime(0.22, audio.currentTime + note.start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + note.start + note.duration);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(audio.currentTime + note.start);
+    oscillator.stop(audio.currentTime + note.start + note.duration + 0.03);
+  });
+}
+
+function showCheckoutAlert(title, message, type = "warning") {
+  checkoutAlert.classList.toggle("is-success", type === "success");
+  checkoutAlertIcon.textContent = type === "success" ? "✓" : "!";
+  checkoutAlertTitle.textContent = title;
+  checkoutAlertMessage.textContent = message;
+  checkoutAlert.showModal();
+}
+
 function getFilteredProducts() {
+  if (!state.products || !Array.isArray(state.products)) return [];
   const query = searchInput.value.trim().toLowerCase();
   const category = categorySelect.value;
   const sortBy = sortSelect.value;
@@ -112,18 +140,19 @@ function getFilteredProducts() {
 }
 
 function renderProducts() {
+  if (!state.products || !Array.isArray(state.products)) return;
   productGrid.innerHTML = "";
   const products = getFilteredProducts();
 
   if (!products.length) {
-    productGrid.innerHTML = '<p class="empty-state">ບໍ່ພົບສິນຄ້າທີ່ກົງກັບຕົວກອງ</p>';
+    productGrid.innerHTML = '<p class="empty-state">ບໍ່ພົບສິນຄ້າ</p>';
     return;
   }
 
   products.forEach((product) => {
     const card = cardTemplate.content.firstElementChild.cloneNode(true);
     const image = card.querySelector("img");
-    image.src = product.image;
+    image.src = product.image || product.image_url;
     image.alt = product.name;
     card.querySelector(".category-label").textContent = product.label;
     card.querySelector("h3").textContent = product.name;
@@ -144,68 +173,103 @@ function renderProducts() {
 function openProductDetail(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
-  const firstAvailable = product.variants.find((variant) => Number(variant.stock) > 0) || product.variants[0];
+
+  const colors = (product.colors && product.colors.length > 0) 
+                 ? product.colors 
+                 : [{ name: "ທົ່ວໄປ", image: product.image || product.image_url }];
+  
+  const sizes = (product.sizes && product.sizes.length > 0) 
+                ? product.sizes 
+                : ["Free Size"];
 
   detailState.product = product;
-  detailState.color = product.colors.find((color) => color.name === firstAvailable.colorName) || product.colors[0];
-  detailState.size = firstAvailable.size || product.sizes[0];
+  detailState.color = colors[0];
+  detailState.size = sizes[0];
 
-  productDialog.querySelector("[data-detail-image]").src = product.image;
-  productDialog.querySelector("[data-detail-image]").alt = product.name;
-  productDialog.querySelector("[data-detail-category]").textContent = product.label;
+  const dialogImg = productDialog.querySelector("[data-detail-image]");
+  dialogImg.src = colors[0].image || product.image || product.image_url;
+  dialogImg.alt = product.name;
+  
   productDialog.querySelector("[data-detail-name]").textContent = product.name;
   productDialog.querySelector("[data-detail-price]").textContent = money.format(product.price);
-  productDialog.querySelector("[data-detail-description]").textContent = product.description;
+  productDialog.querySelector("[data-detail-description]").textContent = product.description || "";
 
   const colorWrap = productDialog.querySelector("[data-detail-colors]");
   const sizeWrap = productDialog.querySelector("[data-detail-sizes]");
   const qtyInput = productDialog.querySelector("[data-detail-qty]");
+  
   colorWrap.innerHTML = "";
   sizeWrap.innerHTML = "";
   qtyInput.value = 1;
-  qtyInput.max = product.stock;
 
-  product.colors.forEach((color) => {
-    const colorCard = document.createElement("button");
-    colorCard.type = "button";
-    colorCard.className = color.name === detailState.color.name ? "detail-color-card is-selected" : "detail-color-card";
-    colorCard.innerHTML = `
-      <img src="${color.image || product.image}" alt="${product.name} ${color.name}">
-      <span>${color.name}</span>
-    `;
-    colorCard.addEventListener("click", () => {
+  colors.forEach((color) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "detail-color-card";
+    btn.innerHTML = `<span>${color.name}</span>`;
+    btn.onclick = () => {
       detailState.color = color;
-      productDialog.querySelector("[data-detail-image]").src = color.image || product.image;
-      colorWrap.querySelectorAll(".detail-color-card").forEach((item) => item.classList.remove("is-selected"));
-      colorCard.classList.add("is-selected");
+      dialogImg.src = color.image || product.image || product.image_url;
+      colorWrap.querySelectorAll(".detail-color-card").forEach(b => b.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
       updateDetailAvailability();
-    });
-    colorWrap.append(colorCard);
+    };
+    colorWrap.append(btn);
   });
 
-  product.sizes.forEach((size) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = size === detailState.size ? "detail-size-pill is-selected" : "detail-size-pill";
-    button.textContent = size;
-    button.addEventListener("click", () => {
+  sizes.forEach((size) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "detail-size-pill";
+    btn.textContent = size;
+    btn.onclick = () => {
       detailState.size = size;
-      sizeWrap.querySelectorAll(".detail-size-pill").forEach((item) => item.classList.remove("is-selected"));
-      button.classList.add("is-selected");
+      sizeWrap.querySelectorAll(".detail-size-pill").forEach(b => b.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
       updateDetailAvailability();
-    });
-    sizeWrap.append(button);
+    };
+    sizeWrap.append(btn);
   });
+
   updateDetailAvailability();
   productDialog.showModal();
 }
+
+function updateDetailAvailability() {
+  if (!detailState.product) return;
+  let available = Number(detailState.product.stock || 0);
+
+  if (detailState.product.variants && detailState.product.variants.length > 0) {
+    const variant = detailState.product.variants.find(v => 
+      String(v.size) === String(detailState.size) && 
+      String(v.colorName) === String(detailState.color.name)
+    );
+    available = variant ? Number(variant.stock) : 0;
+  }
+
+  const qtyInput = productDialog.querySelector("[data-detail-qty]");
+  const addButton = productDialog.querySelector("[data-detail-add]");
+  
+  productDialog.querySelector("[data-detail-stock]").textContent = `ເຫຼືອ ${available} ຊິ້ນ`;
+  qtyInput.max = available;
+  
+  if (available <= 0) {
+    addButton.disabled = true;
+    addButton.textContent = "ສິນຄ້າໝົດ";
+    qtyInput.value = 0;
+  } else {
+    addButton.disabled = false;
+    addButton.textContent = "ເພີ່ມໃສ່ກະຕ່າ";
+  }
+}
+
 
 function getCartKey(productId, size, colorName) {
   return `${productId}::${size}::${colorName}`;
 }
 
 function getVariantStock(product, size, colorName) {
-  const variant = product.variants.find((item) => item.size === size && item.colorName === colorName);
+  const variant = (product.variants || []).find((item) => item.size === size && item.colorName === colorName);
   return Number(variant?.stock || 0);
 }
 
@@ -223,6 +287,28 @@ function getAvailableVariantQty(product, size, colorName) {
   return getVariantStock(product, size, colorName) - getVariantQtyInCart(product.id, size, colorName);
 }
 
+function showCartToast(product, qty) {
+  if (!toastStack || !product) return;
+  window.clearTimeout(toastTimer);
+  toastStack.innerHTML = "";
+
+  const toast = document.createElement("div");
+  toast.className = "cart-toast";
+  toast.innerHTML = `
+    <div class="cart-toast-icon" aria-hidden="true">✓</div>
+    <div>
+      <strong>ເພີ່ມລົງກະຕ່າແລ້ວ</strong>
+      <span>${product.name} x ${qty}</span>
+    </div>
+  `;
+
+  toastStack.append(toast);
+  toastTimer = window.setTimeout(() => {
+    toast.classList.add("is-leaving");
+    toast.addEventListener("animationend", () => toast.remove(), { once: true });
+  }, 2400);
+}
+
 function updateDetailAvailability() {
   if (!detailState.product || !detailState.color || !detailState.size) return;
   const available = Math.max(0, getAvailableVariantQty(detailState.product, detailState.size, detailState.color.name));
@@ -237,12 +323,12 @@ function updateDetailAvailability() {
 
 function addToCart(productId, options) {
   const product = state.products.find((item) => item.id === productId);
-  if (!product) return;
+  if (!product) return 0;
 
   const requestedQty = Math.max(1, Number(options.qty || 1));
   const available = getAvailableVariantQty(product, options.size, options.color.name);
   const allowedQty = Math.min(requestedQty, available);
-  if (allowedQty <= 0) return;
+  if (allowedQty <= 0) return 0;
 
   const key = getCartKey(productId, options.size, options.color.name);
   const currentLine = state.cart.get(key);
@@ -254,6 +340,7 @@ function addToCart(productId, options) {
     key,
   });
   renderCart();
+  return allowedQty;
 }
 
 function updateQty(key, change) {
@@ -274,7 +361,7 @@ function createCartLine({ product, qty, size, color, key }) {
   const line = document.createElement("div");
   line.className = "cart-line";
   line.innerHTML = `
-    <img src="${product.image}" alt="${product.name}">
+    <img src="${product.image || product.image_url}" alt="${product.name}">
     <div>
       <h3>${product.name}</h3>
       <p>${size} / ${color.name} - ${money.format(product.price)} x ${qty}</p>
@@ -305,7 +392,7 @@ function renderCart() {
   [cartItems, cartDialogItems].forEach((target) => {
     target.innerHTML = "";
     if (!lines.length) {
-      target.innerHTML = '<p class="empty-state">ຍັງບໍ່ມີສິນຄ້າໃນກະຕ່າ</p>';
+      target.innerHTML = '<p class="empty-state">ກະຕ່າຍັງວ່າງ</p>';
       return;
     }
     lines.forEach((line) => target.append(createCartLine(line)));
@@ -327,7 +414,10 @@ async function handleCheckout(event) {
     paymentSlipData = await readFileAsDataUrl(slipFile);
   }
   if (paymentMethod === "qr" && !paymentSlipData) {
-    formStatus.textContent = "ກະລຸນາແນບສະລິບການໂອນເງິນ";
+    showCheckoutAlert(
+      "ຕ້ອງແນບສະລິບ",
+      "ກະລຸນາສະແກນ QR ແລ້ວແນບສະລິບກ່ອນສົ່ງອໍເດີ"
+    );
     return;
   }
   const subtotal = lines.reduce((sum, line) => sum + line.product.price * line.qty, 0);
@@ -356,7 +446,7 @@ async function handleCheckout(event) {
     source: "web-storefront",
   };
 
-  formStatus.textContent = "ກຳລັງສົ່ງອໍເດີເຂົ້າ POS...";
+  formStatus.textContent = "ກຳລັງສົ່ງອໍເດີ...";
   try {
     const result = await posGateway.createOrder(payload);
     if (result.ok) {
@@ -364,10 +454,17 @@ async function handleCheckout(event) {
       checkoutForm.reset();
       paymentSlipData = "";
       slipPreview.removeAttribute("src");
-      state.products = CaptainStore.getProducts();
+      if (slipFileName) slipFileName.textContent = "ຍັງບໍ່ໄດ້ເລືອກໄຟລ໌";
+      state.products = await posGateway.fetchProducts();
       renderProducts();
       renderCart();
-      formStatus.textContent = `ສົ່ງສຳເລັດ ເລກອໍເດີ ${result.orderNo}`;
+      formStatus.textContent = "";
+      playSuccessBell();
+      showCheckoutAlert(
+        "ສົ່ງອໍເດີແລ້ວ",
+        `ຂອບໃຈ ອໍເດີຂອງທ່ານຖືກສົ່ງແລ້ວ ເລກອໍເດີ ${result.orderNo}`,
+        "success"
+      );
     } else {
       formStatus.textContent = "ສົ່ງບໍ່ສຳເລັດ ກະລຸນາລອງໃໝ່";
     }
@@ -388,13 +485,20 @@ document.querySelector("[data-close-product]").addEventListener("click", () => {
   productDialog.close();
 });
 
+document.querySelectorAll("[data-close-checkout-alert]").forEach((button) => {
+  button.addEventListener("click", () => checkoutAlert.close());
+});
+
 document.querySelector("[data-detail-add]").addEventListener("click", () => {
   if (!detailState.product) return;
-  addToCart(detailState.product.id, {
+  const addedQty = addToCart(detailState.product.id, {
     color: detailState.color,
     size: detailState.size,
     qty: Number(document.querySelector("[data-detail-qty]").value || 1),
   });
+  if (addedQty > 0) {
+    showCartToast(detailState.product, addedQty);
+  }
   productDialog.close();
 });
 
@@ -414,12 +518,18 @@ checkoutForm.elements.paymentSlip.addEventListener("change", async (event) => {
   paymentSlipData = await readFileAsDataUrl(file);
   if (paymentSlipData) {
     slipPreview.src = paymentSlipData;
+    if (slipFileName) slipFileName.textContent = file?.name || "ອັບໂຫຼດສະລິບແລ້ວ";
   } else {
     slipPreview.removeAttribute("src");
+    if (slipFileName) slipFileName.textContent = "ຍັງບໍ່ໄດ້ເລືອກໄຟລ໌";
   }
 });
 
-checkoutForm.elements.paymentMethod.forEach((input) => {
+const paymentMethodControls = checkoutForm.elements.paymentMethod.length
+  ? [...checkoutForm.elements.paymentMethod]
+  : [checkoutForm.elements.paymentMethod];
+
+paymentMethodControls.forEach((input) => {
   input.addEventListener("input", () => {
     qrPayment.style.display = checkoutForm.elements.paymentMethod.value === "qr" ? "grid" : "none";
   });
@@ -431,8 +541,20 @@ checkoutForm.elements.paymentMethod.forEach((input) => {
 
 checkoutForm.addEventListener("submit", handleCheckout);
 
-posGateway.fetchProducts().then((products) => {
-  state.products = products;
-  renderProducts();
-  renderCart();
-});
+async function initializeApp() {
+  try {
+    console.log("ກຳລັງໂຫຼດສິນຄ້າ...");
+    const products = await posGateway.fetchProducts();
+    state.products = products;
+    renderProducts();
+    renderCart();
+    console.log("ໜ້າຮ້ານພ້ອມໃຊ້ງານ");
+  } catch (error) {
+    console.error("ໂຫຼດໜ້າຮ້ານບໍ່ສຳເລັດ:", error);
+  }
+}
+
+initializeApp();
+
+
+

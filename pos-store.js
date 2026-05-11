@@ -1,286 +1,269 @@
-const CAPTAIN_STORAGE_KEYS = {
-  products: "captain21.products",
-  orders: "captain21.orders",
+﻿const SUPABASE_URL = "https://aoimaluvplwbdqpcgkgi.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvaW1hbHV2cGx3YmRxcGNna2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMTM0NzEsImV4cCI6MjA5Mzc4OTQ3MX0.uUkRmTFrU0XuGDYlhIAR7UvqWrE0ylNW-RdZtCJDTGQ";
+
+const categoryLabels = {
+  tops: "เสื้อ",
+  dresses: "เดรส",
+  outerwear: "แจ็กเก็ต",
+  bottoms: "โส้ง/กระโปรง",
 };
 
-const CAPTAIN_DEFAULT_PRODUCTS = [
-  {
-    id: "C21-F1-001",
-    name: "F1 Shirt",
-    category: "tops",
-    label: "ເສື້ອ",
-    price: 300000,
-    stock: 200,
-    description: "ເສື້ອ F1 ຜ້ານຸ່ມ ໃສ່ສະບາຍ",
-    sizes: ["S", "M", "L", "XL"],
-    colors: [
-      {
-        name: "Black",
-        value: "#111111",
-        image: "assets/products/f1-shirt.jpeg",
-      },
-      {
-        name: "White",
-        value: "#f7f3e8",
-        image: "assets/products/f1-shirt-alt.jpeg",
-      },
-    ],
-    variants: [
-      { colorName: "Black", colorValue: "#111111", size: "S", stock: 50 },
-      { colorName: "Black", colorValue: "#111111", size: "M", stock: 50 },
-      { colorName: "Black", colorValue: "#111111", size: "L", stock: 50 },
-      { colorName: "Black", colorValue: "#111111", size: "XL", stock: 50 },
-      { colorName: "White", colorValue: "#f7f3e8", size: "S", stock: 0 },
-      { colorName: "White", colorValue: "#f7f3e8", size: "M", stock: 0 },
-      { colorName: "White", colorValue: "#f7f3e8", size: "L", stock: 0 },
-      { colorName: "White", colorValue: "#f7f3e8", size: "XL", stock: 0 },
-    ],
-    image: "assets/products/f1-shirt.jpeg",
-  },
-  {
-    id: "C21-TOP-001",
-    name: "Captain Shirt",
-    category: "tops",
-    label: "ເສື້ອ",
-    price: 225000,
-    stock: 100,
-    description: "ເສື້ອ CAPTAIN21 ສີຂາວແຂນຂຽວ ລາຍປັກດ້ານຫຼັງ",
-    colors: ["#f7f3e8", "#0c3f2d", "#d94d6a"],
-    image: "assets/products/captain-shirt.svg",
-  },
-  {
-    id: "C21-TOP-101",
-    name: "Linen Relax Shirt",
-    category: "tops",
-    label: "ເສື້ອ",
-    price: 129000,
-    stock: 18,
-    description: "ເສື້ອເຊີດລິນິນຊົງຫຼວມ ໃສ່ງ່າຍສຳລັບໄປເຮັດວຽກ ແລະ ມື້ພັກຜ່ອນ",
-    colors: ["#f6efe4", "#1f3d36", "#d8b26e"],
-    image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "C21-DRS-204",
-    name: "Midi Wrap Dress",
-    category: "dresses",
-    label: "ເດຣສ",
-    price: 189000,
-    stock: 9,
-    description: "ເດຣສຜູກແອວຄວາມຍາວກາງນ່ອງ ເນື້ອຜ້ານຸ່ມ ແລະ ລະບາຍອາກາດດີ",
-    colors: ["#182622", "#9b3b4f", "#e7d9c4"],
-    image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "C21-OUT-311",
-    name: "City Cropped Jacket",
-    category: "outerwear",
-    label: "ແຈັກເກັດ",
-    price: 249000,
-    stock: 6,
-    description: "ແຈັກເກັດຄຣອບຊົງຄົມ ເໝາະກັບລຸກ smart casual",
-    colors: ["#232323", "#c8862c", "#6e8f8b"],
-    image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "C21-BOT-144",
-    name: "Wide Leg Tailored Pants",
-    category: "bottoms",
-    label: "ໂສ້ງ",
-    price: 159000,
-    stock: 15,
-    description: "ໂສ້ງຂາກວ້າງແອວສູງ ຕັດເຢັບຮຽບງ່າຍ ໃສ່ຊ້ຳໄດ້ທຸກອາທິດ",
-    colors: ["#111111", "#bbb1a2", "#35524a"],
-    image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "C21-TOP-172",
-    name: "Rib Knit Tank",
-    category: "tops",
-    label: "ເສື້ອ",
-    price: 69000,
-    stock: 24,
-    description: "ເສື້ອກ້າມໄໝພົມ rib knit ໃສ່ດ່ຽວ ຫຼື ເລເຢີກັບແຈັກເກັດ",
-    colors: ["#faf4e8", "#59706c", "#b96b77"],
-    image: "https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "C21-BOT-220",
-    name: "Pleated Satin Skirt",
-    category: "bottoms",
-    label: "ກະໂປງ",
-    price: 139000,
-    stock: 11,
-    description: "ກະໂປງພລີດຜ້າຊາຕິນ ນ້ຳໜັກເບົາ ເຄື່ອນໄຫວສວຍ",
-    colors: ["#d4af37", "#1d2939", "#f4d6d8"],
-    image: "https://images.unsplash.com/photo-1583496661160-fb5886a13d24?auto=format&fit=crop&w=900&q=80",
-  },
-];
+const defaultProductImage = "assets/products/captain-shirt.jpeg";
+let supabaseClient = null;
+let productsCache = [];
+let ordersCache = [];
 
-const DEFAULT_PRODUCT_IMAGE = "assets/products/captain-shirt.svg";
-
-function cleanImageSource(image) {
-  if (!image || image.includes("fakepath") || image.endsWith("captain-shirt.jpeg")) {
-    return DEFAULT_PRODUCT_IMAGE;
+function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  if (!window.supabase?.createClient) {
+    throw new Error("Supabase SDK is not loaded. Check the CDN script before pos-store.js.");
   }
-  if (image.endsWith("f1-shirt.svg")) {
-    return "assets/products/f1-shirt.jpeg";
-  }
-  return image;
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  return supabaseClient;
 }
 
-function normalizeProduct(product) {
-  const productImage = cleanImageSource(product.image);
-  const colorValues = product.colors?.length ? product.colors : ["#111111", "#f6efe4", "#0f766e"];
-  const colorNames = ["Black", "Cream", "Green", "Rose", "Gold"];
-  const colors = colorValues.map((color, index) => {
-    const normalized = typeof color === "string"
-      ? { name: colorNames[index] || `Color ${index + 1}`, value: color }
-      : color;
-    return {
-      ...normalized,
-      image: cleanImageSource(normalized.image || productImage),
-    };
-  });
-  const sizes = product.sizes?.length ? product.sizes : ["S", "M", "L", "XL"];
-  const existingVariants = product.variants?.length ? product.variants : [];
-  const variants = colors.flatMap((color, colorIndex) => sizes.map((size, sizeIndex) => {
-    const existing = existingVariants.find((variant) => (
-      variant.colorName === color.name && variant.size === size
-    ));
-    const migratedStock = colorIndex === 0 && sizeIndex === 0 ? Number(product.stock || 0) : 0;
-    return {
-      colorName: color.name,
-      colorValue: color.value,
-      size,
-      stock: Number(existing?.stock ?? migratedStock),
-    };
-  }));
-  const stock = variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0);
+function parseJsonArray(value, fallback = []) {
+  if (Array.isArray(value)) return value;
+  if (!value) return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeProduct(row = {}) {
+  const category = row.category || "tops";
+  const image = row.image || row.image_url || defaultProductImage;
+  const colors = parseJsonArray(row.colors, [{ name: "ทั่วไป", value: "#111111", image }])
+    .map((color) => (typeof color === "string" ? { name: color, value: "#111111", image } : { ...color, image: color.image || image }));
+  const sizes = parseJsonArray(row.sizes, ["Free Size"]);
+  const variants = parseJsonArray(row.variants, []);
+  const stock = Number(row.stock ?? variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0));
 
   return {
-    ...product,
-    image: productImage,
+    ...row,
+    id: String(row.id),
+    name: row.name || "CAPTAIN21 Product",
+    category,
+    label: row.label || categoryLabels[category] || category,
+    price: Number(row.price || 0),
+    stock,
+    description: row.description || "สินค้า CAPTAIN21",
     sizes,
     colors,
     variants,
-    stock,
+    image,
+    image_url: image,
   };
 }
 
+function normalizeOrder(row = {}) {
+  const orderNo = row.order_no || row.orderNo || row.id || `C21-${Date.now().toString().slice(-6)}`;
+  const customer = row.customer || {
+    name: row.customer_name || "",
+    phone: row.customer_phone || "",
+    address: row.address || "",
+  };
+  const totals = row.totals || {
+    total: Number(row.total_amount || 0),
+  };
+  const payment = row.payment || {
+    method: row.payment_method || "cod",
+    status: row.payment_status || row.status || "pending_review",
+    slip: row.payment_slip || "",
+  };
+
+  return {
+    ...row,
+    orderNo: String(orderNo),
+    createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+    customer,
+    items: parseJsonArray(row.items, []),
+    totals,
+    payment,
+    status: row.status || "new",
+  };
+}
+
+function productToRow(product) {
+  const normalized = normalizeProduct(product);
+  return {
+    id: normalized.id,
+    name: normalized.name,
+    category: normalized.category,
+    label: normalized.label,
+    price: normalized.price,
+    stock: normalized.stock,
+    description: normalized.description,
+    sizes: normalized.sizes,
+    colors: normalized.colors,
+    variants: normalized.variants,
+    image: normalized.image,
+    image_url: normalized.image_url,
+  };
+}
+
+function orderToRow(order) {
+  return {
+    customer_name: order.customer?.name || "",
+    customer_phone: order.customer?.phone || "",
+    address: order.customer?.address || "",
+    items: order.items || [],
+    total_amount: Number(order.totals?.total || 0),
+    status: order.status || "new",
+    payment_method: order.payment?.method || "cod",
+  };
+}
+
+async function runSupabase(label, callback) {
+  try {
+    return await callback(getSupabaseClient());
+  } catch (error) {
+    console.error(`${label}:`, error.message || error);
+    throw error;
+  }
+}
+
 const CaptainStore = {
-  read(key, fallback) {
-    try {
-      const value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : fallback;
-    } catch {
-      return fallback;
-    }
+  async loadProducts() {
+    return runSupabase("Load products failed", async (client) => {
+      const { data, error } = await client.from("products").select("*").order("id", { ascending: true });
+      if (error) throw error;
+      productsCache = (data || []).map(normalizeProduct);
+      return productsCache;
+    });
   },
-  write(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
+
+  async loadOrders() {
+    return runSupabase("Load orders failed", async (client) => {
+      const { data, error } = await client.from("orders").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      ordersCache = (data || []).map(normalizeOrder);
+      return ordersCache;
+    });
   },
+
+  async loadAll() {
+    await Promise.all([this.loadProducts(), this.loadOrders()]);
+    return { products: productsCache, orders: ordersCache };
+  },
+
   getProducts() {
-    const products = this.read(CAPTAIN_STORAGE_KEYS.products, null);
-    const defaults = CAPTAIN_DEFAULT_PRODUCTS.map(normalizeProduct);
-    if (products?.length) {
-      const normalizedProducts = products.map(normalizeProduct);
-      const merged = [
-        ...defaults.filter((defaultProduct) => (
-          !normalizedProducts.some((product) => product.id === defaultProduct.id || product.name === defaultProduct.name)
-        )),
-        ...normalizedProducts,
-      ];
-      this.write(CAPTAIN_STORAGE_KEYS.products, merged);
-      return merged;
-    }
-    this.write(CAPTAIN_STORAGE_KEYS.products, defaults);
-    return defaults;
+    return productsCache;
   },
-  saveProducts(products) {
-    this.write(CAPTAIN_STORAGE_KEYS.products, products);
-  },
+
   getOrders() {
-    return this.read(CAPTAIN_STORAGE_KEYS.orders, []);
+    return ordersCache;
   },
-  saveOrders(orders) {
-    this.write(CAPTAIN_STORAGE_KEYS.orders, orders);
+
+  async saveProducts(products) {
+    productsCache = products.map(normalizeProduct);
+    return runSupabase("Save products failed", async (client) => {
+      const { error } = await client.from("products").upsert(productsCache.map(productToRow));
+      if (error) throw error;
+      return productsCache;
+    });
   },
-  createOrder(order) {
-    const products = this.getProducts();
-    const orders = this.getOrders();
-    const orderNo = `C21-${Date.now().toString().slice(-6)}`;
-    const savedOrder = {
-      ...order,
-      orderNo,
-      status: "new",
+
+  async saveOrders(orders) {
+    ordersCache = orders.map(normalizeOrder);
+    return runSupabase("Save orders failed", async (client) => {
+      const { error } = await client.from("orders").upsert(ordersCache.map(orderToRow));
+      if (error) throw error;
+      return ordersCache;
+    });
+  },
+
+  async createOrder(orderData) {
+    const order = normalizeOrder({
+      orderNo: `C21-${Date.now().toString().slice(-6)}`,
       createdAt: new Date().toISOString(),
-    };
-
-    const nextProducts = products.map((product) => {
-      const variants = product.variants.map((variant) => {
-        const soldQty = order.items
-          .filter((item) => (
-            item.sku === product.id &&
-            item.size === variant.size &&
-            item.color === variant.colorName
-          ))
-          .reduce((sum, item) => sum + Number(item.qty), 0);
-        if (!soldQty) return variant;
-        return { ...variant, stock: Math.max(0, Number(variant.stock) - soldQty) };
-      });
-      return normalizeProduct({ ...product, variants });
+      customer: orderData.customer || {
+        name: orderData.customerName || "",
+        phone: orderData.customerPhone || "",
+        address: orderData.address || "",
+      },
+      items: orderData.items || [],
+      totals: orderData.totals || { total: Number(orderData.totalAmount || 0) },
+      payment: orderData.payment || { method: orderData.paymentMethod || "cod", status: "cod", slip: "" },
+      status: "new",
     });
 
-    this.saveProducts(nextProducts);
-    this.saveOrders([savedOrder, ...orders]);
-    return savedOrder;
+    const savedOrder = await runSupabase("Create order failed", async (client) => {
+      const { data, error } = await client.from("orders").insert([orderToRow(order)]).select("*").single();
+      if (error) throw error;
+      return normalizeOrder(data);
+    });
+    order.orderNo = savedOrder.orderNo;
+
+    for (const item of order.items) {
+      const productId = String(item.sku || item.id || "");
+      const qty = Number(item.qty || item.quantity || 0);
+      const product = productsCache.find((entry) => String(entry.id) === productId);
+      if (!product || qty <= 0) continue;
+      product.stock = Math.max(0, Number(product.stock || 0) - qty);
+      if (Array.isArray(product.variants) && item.size && item.color) {
+        product.variants = product.variants.map((variant) => (
+          String(variant.size) === String(item.size) && String(variant.colorName) === String(item.color)
+            ? { ...variant, stock: Math.max(0, Number(variant.stock || 0) - qty) }
+            : variant
+        ));
+      }
+      try {
+        await runSupabase("Update stock failed", async (client) => {
+          const { error } = await client
+            .from("products")
+            .update({ stock: product.stock, variants: product.variants })
+            .eq("id", product.id);
+          if (error) throw error;
+        });
+      } catch (error) {
+        console.warn("Order was saved, but stock could not be updated:", error.message || error);
+      }
+    }
+
+    ordersCache = [order, ...ordersCache];
+    return { ok: true, orderNo: order.orderNo, order };
   },
-  updateOrderStatus(orderNo, status) {
-    const orders = this.getOrders().map((order) => (
-      order.orderNo === orderNo ? { ...order, status } : order
+
+  async updateOrderStatus(orderNo, status) {
+    ordersCache = ordersCache.map((order) => (order.orderNo === orderNo ? { ...order, status } : order));
+    return runSupabase("Update order status failed", async (client) => {
+      const { error } = await client.from("orders").update({ status }).eq("id", orderNo);
+      if (error) throw error;
+    });
+  },
+
+  async deleteOrder(orderNo) {
+    ordersCache = ordersCache.filter((order) => order.orderNo !== orderNo);
+    return runSupabase("Delete order failed", async (client) => {
+      const { error } = await client.from("orders").delete().eq("id", orderNo);
+      if (error) throw error;
+    });
+  },
+
+  async addStock(productId, colorName, size, quantity) {
+    const amount = Number(quantity || 0);
+    const product = productsCache.find((item) => String(item.id) === String(productId));
+    if (!product || amount <= 0) return;
+
+    product.variants = product.variants.map((variant) => (
+      variant.colorName === colorName && variant.size === size
+        ? { ...variant, stock: Number(variant.stock || 0) + amount }
+        : variant
     ));
-    this.saveOrders(orders);
+    product.stock = product.variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0);
+    await this.saveProducts(productsCache);
   },
-  deleteOrder(orderNo) {
-    const orders = this.getOrders();
-    const order = orders.find((item) => item.orderNo === orderNo);
-    if (!order) return;
 
-    const products = this.getProducts().map((product) => {
-      const variants = product.variants.map((variant) => {
-        const returnedQty = order.items
-          .filter((item) => (
-            item.sku === product.id &&
-            item.size === variant.size &&
-            item.color === variant.colorName
-          ))
-          .reduce((sum, item) => sum + Number(item.qty), 0);
-        if (!returnedQty) return variant;
-        return { ...variant, stock: Number(variant.stock) + returnedQty };
-      });
-      return normalizeProduct({ ...product, variants });
-    });
-
-    this.saveProducts(products);
-    this.saveOrders(orders.filter((item) => item.orderNo !== orderNo));
-  },
-  addStock(productId, colorName, size, quantity) {
-    const qty = Math.max(0, Number(quantity || 0));
-    if (!qty) return;
-
-    const products = this.getProducts().map((product) => {
-      if (product.id !== productId) return product;
-      const variants = product.variants.map((variant) => (
-        variant.colorName === colorName && variant.size === size
-          ? { ...variant, stock: Number(variant.stock || 0) + qty }
-          : variant
-      ));
-      return normalizeProduct({ ...product, variants });
-    });
-    this.saveProducts(products);
-  },
-  resetDemo() {
-    this.saveProducts(CAPTAIN_DEFAULT_PRODUCTS);
-    this.saveOrders([]);
+  async resetDemo() {
+    await this.loadAll();
   },
 };
+
+window.CaptainStore = CaptainStore;
+window.supabaseClient = getSupabaseClient();
+
+

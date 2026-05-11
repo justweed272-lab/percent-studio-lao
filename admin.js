@@ -1,35 +1,82 @@
-const money = new Intl.NumberFormat("lo-LA", {
+﻿const money = new Intl.NumberFormat("lo-LA", {
   style: "currency",
   currency: "LAK",
   maximumFractionDigits: 0,
 });
 
-function formatLak(value) {
-  return `LAK ${Number(value || 0).toLocaleString("en-US")}`;
-}
-
 const labels = {
-  tops: "ເສື້ອ",
-  dresses: "ເດຣສ",
-  outerwear: "ແຈັກເກັດ",
-  bottoms: "ໂສ້ງ/ກະໂປງ",
+  tops: "à»€àºªàº·à»‰àº­",
+  dresses: "à»€àº”àº£àºª",
+  outerwear: "à»àºˆàº±àºà»€àºàº±àº”",
+  bottoms: "à»‚àºªà»‰àº‡/àºàº°à»‚àº›àº‡",
 };
 
 const statusLabels = {
-  new: "ອໍເດີໃໝ່",
-  paid: "ຊຳລະແລ້ວ",
-  packed: "ຈັດສົ່ງແລ້ວ",
+  new: "àº­à»à»€àº”àºµà»ƒà»à»ˆ",
+  paid: "àºŠàº³àº¥àº°à»àº¥à»‰àº§",
+  packed: "àºˆàº±àº”àºªàº»à»ˆàº‡à»àº¥à»‰àº§",
 };
+
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function readImportedJson(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      try {
+        resolve(JSON.parse(reader.result));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    reader.addEventListener("error", reject);
+    reader.readAsText(file);
+  });
+}
+
+function getBackupPayload() {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    products: CaptainStore.getProducts(),
+    orders: CaptainStore.getOrders(),
+  };
+}
+
+async function importBackupPayload(data) {
+  if (!Array.isArray(data.products) || !Array.isArray(data.orders)) {
+    throw new Error("Invalid CAPTAIN21 export file");
+  }
+  await CaptainStore.saveProducts(data.products);
+  await CaptainStore.saveOrders(data.orders);
+  clearForm();
+  await renderAll();
+  return {
+    products: data.products.length,
+    orders: data.orders.length,
+  };
+}
 
 const paymentLabels = {
   qr: "QR Payment",
-  cod: "ເກັບເງິນປາຍທາງ",
+  cod: "à»€àºàº±àºšà»€àº‡àº´àº™àº›àº²àºàº—àº²àº‡",
 };
 
 const paymentStatusLabels = {
-  pending_review: "ລໍຖ້າກວດສະລິບ",
+  pending_review: "àº¥à»àº–à»‰àº²àºàº§àº”àºªàº°àº¥àº´àºš",
   cod: "COD",
-  paid: "ຊຳລະແລ້ວ",
+  paid: "àºŠàº³àº¥àº°à»àº¥à»‰àº§",
 };
 
 const productForm = document.querySelector("[data-product-form]");
@@ -38,6 +85,7 @@ const orderList = document.querySelector("[data-order-list]");
 const adminSearch = document.querySelector("[data-admin-search]");
 const orderFilter = document.querySelector("[data-order-filter]");
 const imagePreview = document.querySelector("[data-image-preview]");
+const clearImageButton = document.querySelector("[data-clear-image]");
 const variantTable = document.querySelector("[data-variant-table]");
 const colorChips = document.querySelector("[data-color-chips]");
 const colorNameInput = document.querySelector("[data-color-name]");
@@ -48,58 +96,12 @@ const colorImageEditor = document.querySelector("[data-color-image-editor]");
 const activeColorName = document.querySelector("[data-active-color-name]");
 const activeColorPreview = document.querySelector("[data-active-color-preview]");
 const activeColorFile = document.querySelector("[data-active-color-file]");
+const adminStatus = document.querySelector("[data-admin-status]");
+const backupDialog = document.querySelector("[data-backup-dialog]");
+const backupJson = document.querySelector("[data-backup-json]");
 let selectedImageData = "";
 let activeColorForImage = "";
-const defaultProductImage = "assets/products/captain-shirt.svg";
-
-function readImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result));
-    reader.addEventListener("error", reject);
-    reader.readAsDataURL(file);
-  });
-}
-
-function compressImage(dataUrl) {
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.addEventListener("load", () => {
-      const maxSide = 1200;
-      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      const context = canvas.getContext("2d");
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.84));
-    });
-    image.addEventListener("error", () => resolve(dataUrl));
-    image.src = dataUrl;
-  });
-}
-
-async function prepareImageFile(file) {
-  const dataUrl = await readImageFile(file);
-  return compressImage(dataUrl);
-}
-
-function setMainProductImage(image) {
-  selectedImageData = image;
-  imagePreview.src = image;
-  productForm.elements.image.value = "";
-}
-
-function isUsableImage(src) {
-  return Boolean(src && !src.includes("fakepath") && !src.endsWith("captain-shirt.jpeg"));
-}
-
-function getCurrentMainImage() {
-  if (isUsableImage(selectedImageData)) return selectedImageData;
-  if (isUsableImage(imagePreview.getAttribute("src"))) return imagePreview.getAttribute("src");
-  if (isUsableImage(productForm.elements.image.value.trim())) return productForm.elements.image.value.trim();
-  return defaultProductImage;
-}
+const defaultProductImage = "assets/products/captain-shirt.jpeg";
 
 function parseColors(value) {
   return (value || "Black:#111111, Cream:#f6efe4, Green:#0f766e")
@@ -167,7 +169,7 @@ function setColorImage(colorName, image) {
 function updateActiveColorEditor(colorName) {
   activeColorForImage = colorName;
   const images = getColorImages();
-  activeColorName.textContent = `ຮູບສີ: ${colorName}`;
+  activeColorName.textContent = `àº®àº¹àºšàºªàºµ: ${colorName}`;
   activeColorPreview.src = images[colorName] || selectedImageData || productForm.elements.image.value || defaultProductImage;
   colorImageEditor.hidden = false;
 }
@@ -194,15 +196,6 @@ function renderVariantRows(variants) {
     variantTable.append(row);
   });
   syncTotalStock();
-}
-
-function cleanNumberInput(input) {
-  const normalized = input.value.replace(/^0+(?=\d)/, "");
-  if (input.value !== normalized) input.value = normalized;
-}
-
-function clearZeroOnFocus(input) {
-  if (input.value === "0") input.value = "";
 }
 
 function buildVariantsFromFields(existing = []) {
@@ -235,14 +228,10 @@ function syncTotalStock() {
 
 function getFormProduct() {
   const data = Object.fromEntries(new FormData(productForm).entries());
-  const existingByName = CaptainStore.getProducts().find((product) => (
-    product.name.trim().toLowerCase() === data.name.trim().toLowerCase()
-  ));
-  const id = data.id || existingByName?.id || `C21-${Date.now().toString().slice(-7)}`;
+  const id = data.id || `C21-${Date.now().toString().slice(-7)}`;
   const category = data.category || "tops";
   const colors = parseColors(data.colorsText);
   const sizes = parseSizes(data.sizesText);
-  const mainImage = getCurrentMainImage();
   const variants = readVariantsFromTable().length
     ? readVariantsFromTable()
     : buildVariantsFromFields();
@@ -254,16 +243,16 @@ function getFormProduct() {
     name: data.name.trim(),
     category,
     label: labels[category],
-    price: Number(String(data.price || "0").replace(/[^\d.]/g, "")),
+    price: Number(data.price || 0),
     stock,
-    description: data.description.trim() || "ສິນຄ້າ CAPTAIN21",
+    description: data.description.trim() || "àºªàº´àº™àº„à»‰àº² CAPTAIN21",
     sizes,
     colors: colors.map((color) => ({
       ...color,
-      image: colorImages[color.name] || mainImage,
+      image: colorImages[color.name] || selectedImageData || data.image.trim() || defaultProductImage,
     })),
     variants,
-    image: mainImage,
+    image: selectedImageData || data.image.trim() || defaultProductImage,
   };
 }
 
@@ -274,12 +263,13 @@ function clearForm() {
   activeColorForImage = "";
   productForm.dataset.colorImages = "{}";
   colorImageEditor.hidden = true;
+  productForm.elements.imageFile.value = "";
   imagePreview.src = defaultProductImage;
   productForm.elements.colorsText.value = "Black:#111111, Cream:#f6efe4, Green:#0f766e";
   productForm.elements.sizesText.value = "S, M, L, XL";
   renderColorChips();
   renderVariantRows(buildVariantsFromFields());
-  productForm.querySelector("button[type='submit']").textContent = "ບັນທຶກສິນຄ້າ";
+  productForm.querySelector("button[type='submit']").textContent = "àºšàº±àº™àº—àº¶àºàºªàº´àº™àº„à»‰àº²";
 }
 
 function editProduct(id) {
@@ -295,21 +285,24 @@ function editProduct(id) {
   productForm.dataset.colorImages = JSON.stringify(Object.fromEntries(product.colors.map((color) => [color.name, color.image || product.image])));
   productForm.elements.sizesText.value = product.sizes.join(", ");
   renderColorChips(product.colors);
-  activeColorForImage = "";
-  colorImageEditor.hidden = true;
+  updateActiveColorEditor(product.colors[0]?.name || "");
   productForm.elements.image.value = product.image;
   selectedImageData = product.image.startsWith("data:image/") ? product.image : "";
   imagePreview.src = product.image;
   productForm.elements.description.value = product.description;
   renderVariantRows(product.variants);
-  productForm.querySelector("button[type='submit']").textContent = "ອັບເດດສິນຄ້າ";
+  productForm.querySelector("button[type='submit']").textContent = "àº­àº±àºšà»€àº”àº”àºªàº´àº™àº„à»‰àº²";
   productForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
   const products = CaptainStore.getProducts().filter((product) => product.id !== id);
-  CaptainStore.saveProducts(products);
-  renderAll();
+  try {
+    await CaptainStore.saveProducts(products);
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
 }
 
 function getVariantStock(product, colorName, size) {
@@ -322,7 +315,7 @@ function updateStockCurrent() {
   if (!product) return;
   const colorName = stockForm.elements.colorName.value;
   const size = stockForm.elements.size.value;
-  document.querySelector("[data-stock-current]").textContent = `ສະຕ໊ອກປັດຈຸບັນ: ${getVariantStock(product, colorName, size)} ຊິ້ນ`;
+  document.querySelector("[data-stock-current]").textContent = `àºªàº°àº•à»Šàº­àºàº›àº±àº”àºˆàº¸àºšàº±àº™: ${getVariantStock(product, colorName, size)} àºŠàº´à»‰àº™`;
 }
 
 function openStockDialog(productId) {
@@ -361,7 +354,7 @@ function renderMetrics(products, orders) {
   const stockCount = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
   const lowStock = products.filter((product) => Number(product.stock) <= 3).length;
 
-  document.querySelector("[data-total-sales]").textContent = formatLak(totalSales);
+  document.querySelector("[data-total-sales]").textContent = money.format(totalSales);
   document.querySelector("[data-order-count]").textContent = orders.length;
   document.querySelector("[data-stock-count]").textContent = stockCount;
   document.querySelector("[data-low-stock]").textContent = lowStock;
@@ -375,18 +368,17 @@ function renderProducts() {
 
   productTable.innerHTML = "";
   if (!products.length) {
-    productTable.innerHTML = '<tr><td colspan="5">ບໍ່ມີສິນຄ້າ</td></tr>';
+    productTable.innerHTML = '<tr><td colspan="5">àºšà»à»ˆàº¡àºµàºªàº´àº™àº„à»‰àº²</td></tr>';
     return;
   }
 
   products.forEach((product) => {
     const row = document.createElement("tr");
     const stockClass = product.stock <= 3 ? "stock-pill low" : "stock-pill";
-    const productImage = isUsableImage(product.image) ? product.image : product.colors?.[0]?.image || defaultProductImage;
     row.innerHTML = `
       <td>
         <div class="product-cell">
-          <img src="${productImage}" alt="${product.name}" onerror="this.src='${defaultProductImage}'">
+          <img src="${product.image}" alt="${product.name}">
           <div>
             <strong>${product.name}</strong>
             <div>${product.id}</div>
@@ -394,13 +386,13 @@ function renderProducts() {
         </div>
       </td>
       <td>${product.label}</td>
-      <td>${formatLak(product.price)}</td>
+      <td>${money.format(product.price)}</td>
       <td><span class="${stockClass}">${product.stock}</span></td>
       <td>
         <div class="table-actions">
-          <button class="table-button" type="button" data-stock="${product.id}">ເພີ່ມສະຕ໊ອກ</button>
-          <button class="table-button" type="button" data-edit="${product.id}">ແກ້ໄຂ</button>
-          <button class="table-button danger" type="button" data-delete="${product.id}">ລຶບ</button>
+          <button class="table-button" type="button" data-stock="${product.id}">à»€àºžàºµà»ˆàº¡àºªàº°àº•à»Šàº­àº</button>
+          <button class="table-button" type="button" data-edit="${product.id}">à»àºà»‰à»„àº‚</button>
+          <button class="table-button danger" type="button" data-delete="${product.id}">àº¥àº¶àºš</button>
         </div>
       </td>
     `;
@@ -414,7 +406,7 @@ function renderOrders() {
   orderList.innerHTML = "";
 
   if (!orders.length) {
-    orderList.innerHTML = '<div class="empty-admin">ຍັງບໍ່ມີອໍເດີຈາກໜ້າຮ້ານ</div>';
+    orderList.innerHTML = '<div class="empty-admin">àºàº±àº‡àºšà»à»ˆàº¡àºµàº­à»à»€àº”àºµàºˆàº²àºà»œà»‰àº²àº®à»‰àº²àº™</div>';
     return;
   }
 
@@ -438,18 +430,18 @@ function renderOrders() {
           <span class="status-pill">${statusLabels[order.status] || order.status}</span>
         </div>
         <p>${order.customer?.address || ""}</p>
-        <p class="payment-line">${paymentLabels[payment.method] || payment.method} · ${paymentStatusLabels[payment.status] || payment.status}</p>
+        <p class="payment-line">${paymentLabels[payment.method] || payment.method} Â· ${paymentStatusLabels[payment.status] || payment.status}</p>
         ${slip}
         <ol class="order-items">${items}</ol>
       </div>
       <div class="order-actions">
-        <strong>${formatLak(order.totals?.total || 0)}</strong>
+        <strong>${money.format(order.totals?.total || 0)}</strong>
         <select data-status="${order.orderNo}">
-          <option value="new">ອໍເດີໃໝ່</option>
-          <option value="paid">ຊຳລະແລ້ວ</option>
-          <option value="packed">ຈັດສົ່ງແລ້ວ</option>
+          <option value="new">àº­à»à»€àº”àºµà»ƒà»à»ˆ</option>
+          <option value="paid">àºŠàº³àº¥àº°à»àº¥à»‰àº§</option>
+          <option value="packed">àºˆàº±àº”àºªàº»à»ˆàº‡à»àº¥à»‰àº§</option>
         </select>
-        <button class="table-button danger" type="button" data-delete-order="${order.orderNo}">ລຶບອໍເດີ</button>
+        <button class="table-button danger" type="button" data-delete-order="${order.orderNo}">àº¥àº¶àºšàº­à»à»€àº”àºµ</button>
       </div>
     `;
     card.querySelector("[data-status]").value = order.status;
@@ -457,7 +449,8 @@ function renderOrders() {
   });
 }
 
-function renderAll() {
+async function renderAll() {
+  await CaptainStore.loadAll();
   const products = CaptainStore.getProducts();
   const orders = CaptainStore.getOrders();
   renderMetrics(products, orders);
@@ -465,26 +458,22 @@ function renderAll() {
   renderOrders();
 }
 
-productForm.addEventListener("submit", (event) => {
+productForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const nextProduct = getFormProduct();
   const products = CaptainStore.getProducts();
-  const exists = products.some((product) => (
-    product.id === nextProduct.id ||
-    product.name.trim().toLowerCase() === nextProduct.name.trim().toLowerCase()
-  ));
+  const exists = products.some((product) => product.id === nextProduct.id);
   const nextProducts = exists
-    ? products.map((product) => (
-      product.id === nextProduct.id ||
-      product.name.trim().toLowerCase() === nextProduct.name.trim().toLowerCase()
-        ? nextProduct
-        : product
-    ))
+    ? products.map((product) => (product.id === nextProduct.id ? nextProduct : product))
     : [nextProduct, ...products];
 
-  CaptainStore.saveProducts(nextProducts);
-  clearForm();
-  renderAll();
+  try {
+    await CaptainStore.saveProducts(nextProducts);
+    clearForm();
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
 });
 
 document.querySelector("[data-clear-form]").addEventListener("click", clearForm);
@@ -495,40 +484,33 @@ productForm.elements.image.addEventListener("input", (event) => {
   imagePreview.src = event.target.value || defaultProductImage;
 });
 
-productForm.elements.price.addEventListener("input", (event) => {
-  const cleanValue = event.target.value.replace(/[^\d]/g, "");
-  if (event.target.value !== cleanValue) event.target.value = cleanValue;
-});
-
-productForm.elements.imageFile.addEventListener("click", (event) => {
-  event.target.value = "";
-});
-
-productForm.elements.imageFile.addEventListener("change", async (event) => {
+productForm.elements.imageFile.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  const image = await prepareImageFile(file);
-  setMainProductImage(image);
-  if (activeColorForImage) setColorImage(activeColorForImage, image);
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    selectedImageData = reader.result;
+    imagePreview.src = selectedImageData;
+    productForm.elements.image.value = "";
+    if (activeColorForImage) setColorImage(activeColorForImage, selectedImageData);
+  });
+  reader.readAsDataURL(file);
+});
+
+clearImageButton.addEventListener("click", () => {
+  selectedImageData = "";
+  productForm.elements.image.value = defaultProductImage;
+  productForm.elements.imageFile.value = "";
+  imagePreview.src = defaultProductImage;
+  if (activeColorForImage) setColorImage(activeColorForImage, defaultProductImage);
 });
 
 document.querySelector("[data-build-variants]").addEventListener("click", () => {
   renderVariantRows(buildVariantsFromFields(readVariantsFromTable()));
 });
 
-variantTable.addEventListener("focusin", (event) => {
-  if (event.target.matches("input[type='number']")) {
-    clearZeroOnFocus(event.target);
-  }
-});
-
-variantTable.addEventListener("input", (event) => {
-  if (event.target.matches("input[type='number']")) {
-    cleanNumberInput(event.target);
-  }
-  syncTotalStock();
-});
+variantTable.addEventListener("input", syncTotalStock);
 productForm.elements.colorsText.addEventListener("input", () => {
   renderColorChips();
 });
@@ -563,20 +545,16 @@ colorChips.addEventListener("click", (event) => {
   renderVariantRows(buildVariantsFromFields(readVariantsFromTable()));
 });
 
-activeColorFile.addEventListener("click", (event) => {
-  event.target.value = "";
-});
-
 activeColorFile.addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file || !activeColorForImage) return;
-  const image = await prepareImageFile(file);
+  const image = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", reject);
+    reader.readAsDataURL(file);
+  });
   setColorImage(activeColorForImage, image);
-  const firstColor = parseColors(productForm.elements.colorsText.value)[0]?.name;
-  const mainImage = productForm.elements.image.value;
-  if (!selectedImageData || !mainImage || mainImage === defaultProductImage || activeColorForImage === firstColor) {
-    setMainProductImage(image);
-  }
 });
 
 document.querySelector("[data-preset-colors]").addEventListener("click", (event) => {
@@ -595,24 +573,74 @@ productTable.addEventListener("click", (event) => {
   if (stockId) openStockDialog(stockId);
 });
 
-orderList.addEventListener("input", (event) => {
+orderList.addEventListener("input", async (event) => {
   const orderNo = event.target.dataset.status;
   if (!orderNo) return;
-  CaptainStore.updateOrderStatus(orderNo, event.target.value);
-  renderAll();
+  try {
+    await CaptainStore.updateOrderStatus(orderNo, event.target.value);
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
 });
 
-orderList.addEventListener("click", (event) => {
+orderList.addEventListener("click", async (event) => {
   const orderNo = event.target.dataset.deleteOrder;
   if (!orderNo) return;
-  CaptainStore.deleteOrder(orderNo);
-  renderAll();
+  try {
+    await CaptainStore.deleteOrder(orderNo);
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
 });
 
-document.querySelector("[data-reset-demo]").addEventListener("click", () => {
-  CaptainStore.resetDemo();
-  clearForm();
-  renderAll();
+document.querySelector("[data-reset-demo]").addEventListener("click", async () => {
+  try {
+    await CaptainStore.resetDemo();
+    clearForm();
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
+});
+
+document.querySelector("[data-export-store]").addEventListener("click", () => {
+  const payload = getBackupPayload();
+  downloadJson(`captain21-store-${new Date().toISOString().slice(0, 10)}.json`, payload);
+  backupJson.value = JSON.stringify(payload, null, 2);
+  backupDialog.showModal();
+  adminStatus.textContent = "Export àºªàº³à»€àº¥àº±àº” àºàº§àº”à»€àºšàº´à»ˆàº‡à»ƒàº™ Downloads";
+});
+
+document.querySelector("[data-import-store]").addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const data = await readImportedJson(file);
+  const result = await importBackupPayload(data);
+  adminStatus.textContent = `Import àºªàº³à»€àº¥àº±àº”: ${result.products} products, ${result.orders} orders`;
+  event.target.value = "";
+});
+
+document.querySelector("[data-close-backup]").addEventListener("click", () => {
+  backupDialog.close();
+});
+
+document.querySelector("[data-copy-backup]").addEventListener("click", async () => {
+  backupJson.select();
+  try {
+    await navigator.clipboard.writeText(backupJson.value);
+  } catch {
+    document.execCommand("copy");
+  }
+  adminStatus.textContent = "Copy JSON àºªàº³à»€àº¥àº±àº”";
+});
+
+document.querySelector("[data-import-pasted]").addEventListener("click", async () => {
+  const data = JSON.parse(backupJson.value);
+  const result = await importBackupPayload(data);
+  backupDialog.close();
+  adminStatus.textContent = `Import JSON àºªàº³à»€àº¥àº±àº”: ${result.products} products, ${result.orders} orders`;
 });
 
 document.querySelector("[data-close-stock]").addEventListener("click", () => {
@@ -621,24 +649,25 @@ document.querySelector("[data-close-stock]").addEventListener("click", () => {
 
 stockForm.elements.colorName.addEventListener("input", updateStockCurrent);
 stockForm.elements.size.addEventListener("input", updateStockCurrent);
-stockForm.elements.quantity.addEventListener("focus", (event) => {
-  clearZeroOnFocus(event.target);
-});
-stockForm.elements.quantity.addEventListener("input", (event) => {
-  cleanNumberInput(event.target);
-});
 
-stockForm.addEventListener("submit", (event) => {
+stockForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  CaptainStore.addStock(
-    stockForm.elements.productId.value,
-    stockForm.elements.colorName.value,
-    stockForm.elements.size.value,
-    stockForm.elements.quantity.value,
-  );
-  stockDialog.close();
-  renderAll();
+  try {
+    await CaptainStore.addStock(
+      stockForm.elements.productId.value,
+      stockForm.elements.colorName.value,
+      stockForm.elements.size.value,
+      stockForm.elements.quantity.value,
+    );
+    stockDialog.close();
+    await renderAll();
+  } catch (error) {
+    adminStatus.textContent = error.message;
+  }
 });
 
-renderAll();
+renderAll().catch((error) => adminStatus.textContent = error.message);
 clearForm();
+
+
+

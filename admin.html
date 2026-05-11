@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="lo">
   <head>
     <meta charset="utf-8">
@@ -17,27 +17,33 @@
         </span>
       </a>
       <nav class="admin-nav" aria-label="Admin">
-        <a href="index.html">ໜ້າຮ້ານ</a>
+        <a href="index.html">à»œà»‰àº²àº®à»‰àº²àº™</a>
+        <button type="button" data-export-store>Export</button>
+        <label class="import-button">
+          Import
+          <input type="file" accept="application/json" data-import-store>
+        </label>
         <button type="button" data-reset-demo>Reset demo</button>
       </nav>
+      <p class="admin-status" data-admin-status></p>
     </header>
 
     <main class="admin-shell">
-      <section class="metric-grid" aria-label="ສະຫຼຸບ">
+      <section class="metric-grid" aria-label="àº¥àº²àºàº‡àº²àº™">
         <article class="metric">
-          <span>ຍອດຂາຍ</span>
-          <strong data-total-sales>LAK 0</strong>
+          <span>àºàº­àº”àº‚àº²àºàº¥àº§àº¡</span>
+          <strong data-total-sales>â‚­0</strong>
         </article>
         <article class="metric">
-          <span>ອໍເດີ</span>
+          <span>àº­à»à»€àº”àºµàº—àº±àº‡à»àº»àº”</span>
           <strong data-order-count>0</strong>
         </article>
         <article class="metric">
-          <span>ສະຕ໊ອກລວມ</span>
+          <span>àºªàº´àº™àº„à»‰àº²à»ƒàº™àºªàº°àº•à»Šàº­àº</span>
           <strong data-stock-count>0</strong>
         </article>
         <article class="metric warning">
-          <span>ສະຕ໊ອກໃກ້ໝົດ</span>
+          <span>àºªàº°àº•à»Šàº­àºàº•à»ˆàº³</span>
           <strong data-low-stock>0</strong>
         </article>
       </section>
@@ -45,54 +51,45 @@
       <section class="admin-layout">
         <aside class="admin-panel">
           <p class="eyebrow">Product</p>
-          <h1>ເພີ່ມ / ແກ້ໄຂສິນຄ້າ</h1>
+          <h1>àºˆàº±àº”àºàº²àº™àºªàº´àº™àº„à»‰àº²</h1>
           <form class="product-form" data-product-form>
             <input type="hidden" name="id">
-            <input type="hidden" name="image">
-
-            <label class="full">
-              ຮູບສິນຄ້າ
-              <input name="imageFile" type="file" accept="image/*">
-            </label>
-            <img class="image-preview" data-image-preview src="assets/products/captain-shirt.svg" alt="Product preview">
-
-            <label class="full">
-              ຊື່ສິນຄ້າ
-              <input name="name" required placeholder="ເຊັ່ນ F1 Shirt">
+            <label>
+              àºŠàº·à»ˆàºªàº´àº™àº„à»‰àº²
+              <input name="name" required placeholder="à»€àºŠàº±à»ˆàº™ CAPTAIN Shirt">
             </label>
             <label>
-              ໝວດ
+              à»àº§àº”à»àº¹à»ˆ
               <select name="category">
-                <option value="tops">ເສື້ອ</option>
-                <option value="dresses">ເດຣສ</option>
-                <option value="outerwear">ແຈັກເກັດ</option>
-                <option value="bottoms">ໂສ້ງ / ກະໂປງ</option>
+                <option value="tops">à»€àºªàº·à»‰àº­</option>
+                <option value="dresses">à»€àº”àº£àºª</option>
+                <option value="outerwear">à»àºˆàº±àºà»€àºàº±àº”</option>
+                <option value="bottoms">à»‚àºªà»‰àº‡/àºàº°à»‚àº›àº‡</option>
               </select>
             </label>
             <label>
-              ລາຄາ LAK
-              <input name="price" required type="number" min="0" step="1000" placeholder="300000">
+              àº¥àº²àº„àº² LAK
+              <input name="price" required type="number" min="0" step="1000" placeholder="129000">
             </label>
             <label>
-              ສະຕ໊ອກລວມ
-              <input name="stock" type="number" min="0" step="1" placeholder="ຄຳນວນອັດຕະໂນມັດ" readonly>
+              àºˆàº³àº™àº§àº™àºªàº°àº•à»Šàº­àº
+              <input name="stock" type="number" min="0" step="1" placeholder="àº¥àº§àº¡àº­àº±àº”àº•àº°à»‚àº™àº¡àº±àº”" readonly>
             </label>
-
             <label class="full">
-              ສີ
+              àºªàºµ
               <input name="colorsText" placeholder="Black:#111111, White:#f7f3e8, Green:#0c3f2d">
             </label>
             <div class="color-builder full">
               <div class="color-builder-fields">
                 <label>
-                  ຊື່ສີ
+                  àºŠàº·à»ˆàºªàºµ
                   <input data-color-name placeholder="Brown">
                 </label>
                 <label>
-                  ເລືອກສີ
+                  àº¥àº°àº«àº±àº”àºªàºµ
                   <input data-color-value type="color" value="#111111">
                 </label>
-                <button class="secondary-admin-button" type="button" data-add-color>+ ເພີ່ມສີ</button>
+                <button class="secondary-admin-button" type="button" data-add-color>à»€àºžàºµà»ˆàº¡àºªàºµ</button>
               </div>
               <div class="preset-colors" data-preset-colors>
                 <button type="button" data-color-name-preset="Black" data-color-value-preset="#111111" style="background:#111111" aria-label="Black"></button>
@@ -107,40 +104,56 @@
                 <strong data-active-color-name></strong>
                 <img data-active-color-preview alt="">
                 <label>
-                  ຮູບຂອງສີນີ້
+                  àº®àº¹àºšàº‚àº­àº‡àºªàºµàº™àºµà»‰
                   <input data-active-color-file type="file" accept="image/*">
                 </label>
               </div>
             </div>
-
             <label class="full">
-              ໄຊສ໌
+              à»„àºŠàºªà»Œ
               <input name="sizesText" placeholder="S, M, L, XL">
             </label>
             <div class="variant-tools full">
-              <button class="secondary-admin-button" type="button" data-build-variants>ສ້າງຕາຕະລາງສະຕ໊ອກ</button>
-              <span>ໃສ່ຈຳນວນແຍກຕາມສີ ແລະ ໄຊສ໌</span>
+              <button class="secondary-admin-button" type="button" data-build-variants>àºªà»‰àº²àº‡àº•àº²àº•àº°àº¥àº²àº‡àºªàº°àº•à»Šàº­àº</button>
+              <span>à»ƒàºªà»ˆàºˆàº³àº™àº§àº™à»àºàºàº•àº²àº¡àºªàºµ à»àº¥àº° à»„àºŠàºªà»Œ</span>
             </div>
             <div class="variant-table-wrap full">
               <table class="variant-table">
                 <thead>
                   <tr>
-                    <th>ສີ</th>
-                    <th>ໄຊສ໌</th>
-                    <th>ສະຕ໊ອກ</th>
+                    <th>àºªàºµ</th>
+                    <th>à»„àºŠàºªà»Œ</th>
+                    <th>àºªàº°àº•à»Šàº­àº</th>
                   </tr>
                 </thead>
                 <tbody data-variant-table></tbody>
               </table>
             </div>
-
             <label class="full">
-              ລາຍລະອຽດ
-              <textarea name="description" rows="4" placeholder="ລາຍລະອຽດສັ້ນໆຂອງສິນຄ້າ"></textarea>
+              à»€àº¥àº·àº­àºàº®àº¹àºšàºˆàº²àºà»€àº„àº·à»ˆàº­àº‡
+              <input name="imageFile" type="file" accept="image/*">
+            </label>
+            <div class="image-preview-panel full">
+              <div class="image-preview-head">
+                <span>àº®àº¹àºšàº›àº±àº”àºˆàº¸àºšàº±àº™</span>
+                <button type="button" class="secondary-admin-button compact" data-clear-image>à»ƒàºŠà»‰àº®àº¹àºš demo</button>
+              </div>
+              <img class="image-preview" data-image-preview src="assets/products/captain-shirt.jpeg" alt="Product preview">
+            </div>
+            <details class="advanced-field full">
+              <summary>URL àº®àº¹àºšàºªàº´àº™àº„à»‰àº² (àº‚àº±à»‰àº™àºªàº¹àº‡)</summary>
+              <label>
+                à»ƒàºŠà»‰à»€àº¡àº·à»ˆàº­àº¡àºµàº¥àº´à»‰àº‡àº®àº¹àºšàº¢àº¹à»ˆà»àº¥à»‰àº§
+                <input name="image" placeholder="assets/products/captain-shirt.jpeg">
+              </label>
+            </details>
+            <label class="full">
+              àº¥àº²àºàº¥àº°àº­àº½àº”
+              <textarea name="description" rows="4" placeholder="àº¥àº²àºàº¥àº°àº­àº½àº”àºªàº±à»‰àº™à»†àº‚àº­àº‡àºªàº´àº™àº„à»‰àº²"></textarea>
             </label>
             <div class="form-actions">
-              <button class="primary-button" type="submit">ບັນທຶກສິນຄ້າ</button>
-              <button class="secondary-admin-button" type="button" data-clear-form>ລ້າງຟອມ</button>
+              <button class="primary-button" type="submit">àºšàº±àº™àº—àº¶àºàºªàº´àº™àº„à»‰àº²</button>
+              <button class="secondary-admin-button" type="button" data-clear-form>àº¥à»‰àº²àº‡àºŸàº­àº¡</button>
             </div>
           </form>
         </aside>
@@ -149,18 +162,18 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">Inventory</p>
-              <h2>ສິນຄ້າທັງໝົດ</h2>
+              <h2>àºªàº´àº™àº„à»‰àº²àº—àº±àº‡à»àº»àº”</h2>
             </div>
-            <input data-admin-search type="search" placeholder="ຄົ້ນຫາສິນຄ້າ">
+            <input data-admin-search type="search" placeholder="àº„àº»à»‰àº™àº«àº²àºªàº´àº™àº„à»‰àº²">
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>ສິນຄ້າ</th>
-                  <th>ໝວດ</th>
-                  <th>ລາຄາ</th>
-                  <th>ສະຕ໊ອກ</th>
+                  <th>àºªàº´àº™àº„à»‰àº²</th>
+                  <th>à»àº§àº”</th>
+                  <th>àº¥àº²àº„àº²</th>
+                  <th>àºªàº°àº•à»Šàº­àº</th>
                   <th></th>
                 </tr>
               </thead>
@@ -174,13 +187,13 @@
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Orders</p>
-            <h2>ອໍເດີລູກຄ້າ</h2>
+            <h2>àº­à»à»€àº”àºµàºˆàº²àºà»œà»‰àº²àº®à»‰àº²àº™</h2>
           </div>
           <select data-order-filter>
-            <option value="all">ທັງໝົດ</option>
-            <option value="new">ອໍເດີໃໝ່</option>
-            <option value="paid">ຈ່າຍແລ້ວ</option>
-            <option value="packed">ກຳລັງຈັດສົ່ງ</option>
+            <option value="all">àº—àº±àº‡à»àº»àº”</option>
+            <option value="new">àº­à»à»€àº”àºµà»ƒà»à»ˆ</option>
+            <option value="paid">àºŠàº³àº¥àº°à»àº¥à»‰àº§</option>
+            <option value="packed">àºˆàº±àº”àºªàº»à»ˆàº‡à»àº¥à»‰àº§</option>
           </select>
         </div>
         <div class="order-list" data-order-list></div>
@@ -189,28 +202,44 @@
 
     <dialog class="stock-dialog" data-stock-dialog>
       <form method="dialog" class="stock-dialog-panel" data-stock-form>
-        <button class="detail-close" type="button" data-close-stock aria-label="ປິດ">x</button>
+        <button class="detail-close" type="button" data-close-stock aria-label="àº›àº´àº”">x</button>
         <p class="eyebrow">Stock</p>
-        <h2 data-stock-product-name>ເພີ່ມສະຕ໊ອກ</h2>
+        <h2 data-stock-product-name>à»€àºžàºµà»ˆàº¡àºªàº°àº•à»Šàº­àº</h2>
         <input type="hidden" name="productId">
         <label>
-          ສີ
+          àºªàºµ
           <select name="colorName" data-stock-color></select>
         </label>
         <label>
-          ໄຊສ໌
+          à»„àºŠàºªà»Œ
           <select name="size" data-stock-size></select>
         </label>
         <label>
-          ຈຳນວນທີ່ຈະເພີ່ມ
+          àºˆàº³àº™àº§àº™àº—àºµà»ˆà»€àºžàºµà»ˆàº¡
           <input name="quantity" type="number" min="1" step="1" value="1">
         </label>
         <p class="stock-current" data-stock-current></p>
-        <button class="primary-button" type="submit">+ ເພີ່ມສະຕ໊ອກ</button>
+        <button class="primary-button" type="submit">+ à»€àºžàºµà»ˆàº¡àºªàº°àº•à»Šàº­àº</button>
       </form>
     </dialog>
 
+    <dialog class="backup-dialog" data-backup-dialog>
+      <div class="backup-panel">
+        <button class="detail-close" type="button" data-close-backup aria-label="àº›àº´àº”">x</button>
+        <p class="eyebrow">Backup</p>
+        <h2>Export / Import JSON</h2>
+        <textarea data-backup-json rows="12" spellcheck="false"></textarea>
+        <div class="form-actions">
+          <button class="primary-button" type="button" data-copy-backup>Copy JSON</button>
+          <button class="secondary-admin-button" type="button" data-import-pasted>Import JSON</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="pos-store.js"></script>
     <script src="admin.js"></script>
   </body>
 </html>
+
+
